@@ -293,7 +293,9 @@ int read_formatted(char *fileName, int *NINTCI, int *NINTCF, int *NEXTCI,
 	}
 	//4 variables in total!!!
 	fscanf(fp, "%d", NINTCI);
+	printf("weird pointer %d \n", *NINTCI);
 	fscanf(fp, "%d", NINTCF);
+	printf("weird pointer %d \n", *NINTCF);
 	fscanf(fp, "%d", NEXTCI);
 	fscanf(fp, "%d", NEXTCF);
 

@@ -10,8 +10,8 @@
 #define  NUM_FEVENTS 2
 
 int main(int argc, char *argv[])
-{origin/<branch> master
-	if (argc < 3)
+{
+	if( argc < 3 )
 	{
 		printf("Usage: %s input_file output_file\n", argv[0]);
 		return EXIT_FAILURE;
@@ -21,29 +21,23 @@ int main(int argc, char *argv[])
 	int retval;
 
 	//EventSet for L2 & L3 cache misses and accesses
-	int EventSet [NUMEVENTS] = {PAPI_NULL};
+	int EventSet[NUMEVENTS] = {PAPI_NULL};
 	//Eventset for calculating the mflops
-	int EventSet1 [NUM_FEVENTS] = {PAPI_NULL};
+	int EventSet1[NUM_FEVENTS] = {PAPI_NULL};
 	// Data pointer for getting the cpu info
 	// const PAPI_hw_info_t * hwinfo = NULL;
 
 	// Initialising the library
-	retval = PAPI_library_init ( PAPI_VER_CURRENT );
+	retval = PAPI_library_init( PAPI_VER_CURRENT );
 
-	if (retval != origin/<branch> masterPAPI_VER_CURRENT) {
-		//ERROR("Initialisation of Papi failed");
+	if (retval != PAPI_VER_CURRENT) {
+		printf( "Initialisation of Papi failed" );
 		exit(1);
 	}
-
-	/* Getting the hardware info*/
-	/* if ((hwinfo = PAPI_get_hardware_info()) == NULL) {
-		exit(1);
-	}
-	printf("%d cpu's \t %d cores per socket \n",hwinfo->totalcpus,hwinfo->cores);*/
 			
 	/* Variables for reading counters of EventSet*/
-	long long eventValues [NUMEVENTS] = {0};
-	long long eventFValues [NUM_FEVENTS] = {0};
+	long long eventValues[NUMEVENTS] = {0};
+	long long eventFValues[NUM_FEVENTS] = {0};
 
 	char *file_in = argv[1];
 	char *file_out = argv[2];
@@ -63,7 +57,7 @@ int main(int argc, char *argv[])
 	double *bs, *be, *bn, *bw, *bl, *bh, *bp, *su;
 
 	float real_time, proc_time, mflops;
-	long_long flpins;
+	long long flpins;
 	long startusec, endusec;
 
 	//Initializes the library again
@@ -80,8 +74,8 @@ int main(int argc, char *argv[])
 	}
 
 	//Adding events to the eventset
-	if (( PAPI_add_event(EventSet[0], PAPI_L2_TCH) != PAPI_OK ) &&
-	   ( PAPI_add_event(EventSet[1], PAPI_L3_TCH) != PAPI_OK ) &&
+	if (( PAPI_add_event(EventSet[0], PAPI_L2_TCM) != PAPI_OK ) &&
+	   ( PAPI_add_event(EventSet[1], PAPI_L3_TCM) != PAPI_OK ) &&
 	   ( PAPI_add_event(EventSet[1], PAPI_L2_TCA) != PAPI_OK ) &&
 	   ( PAPI_add_event(EventSet[1], PAPI_L3_TCA) != PAPI_OK )){
 		exit(1);
@@ -89,11 +83,11 @@ int main(int argc, char *argv[])
 
 	//Adding events to the eventset1
 	if (( PAPI_add_event(EventSet1[0], PAPI_TOT_INS) != PAPI_OK ) &&
-	   ( PAPI_add_event(EventSet[1], PAPI_TOT_CYC) != PAPI_OK ) ){
+	   ( PAPI_add_event(EventSet1[1], PAPI_TOT_CYC) != PAPI_OK ) ){
 			exit(1);
 	}
 
-	// Num of counters the system is supports at a time
+	//Num of counters the system is supports at a time
 	int hw_counters = PAPI_num_counters();
 	printf ("No. of counters supported: %d \n", hw_counters);
 
@@ -195,7 +189,7 @@ int main(int argc, char *argv[])
 	printf("Execution time in microseconds for the initialisation: %ld \n",endusec-startusec);
 
 	//Read the eventSet counters
-	PAPI_read ( EventSet[0], eventValues+0 );
+	PAPI_stop ( EventSet[0], eventValues+0 );
 	PAPI_read ( EventSet[1], eventValues+1 );
 	PAPI_read ( EventSet[2], eventValues+2 );
 	PAPI_read ( EventSet[3], eventValues+3 );
@@ -210,7 +204,7 @@ int main(int argc, char *argv[])
 	printf ("%lld Total cycles \n", eventFValues[1] );
 
 	//Resetting the event counters
-	PAPI_reset ( EventSet[0] );
+	PAPI_start ( EventSet[0] );
 	PAPI_reset ( EventSet[1] );
 	PAPI_reset ( EventSet[2] );
 	PAPI_reset ( EventSet[3] );
