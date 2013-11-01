@@ -23,10 +23,14 @@ int main(int argc, char *argv[])
 
 	//EventSet for L2 & L3 cache misses and accesses
 	int EventSet = PAPI_NULL;
+
 	//Eventset for calculating the mflops
 	// int EventSet1[NUM_FEVENTS] = { PAPI_NULL };
+
 	// Data pointer for getting the cpu info
-	// const PAPI_hw_info_t * hwinfo = NULL;
+	const PAPI_hw_info_t * hwinfo = NULL;
+
+	PAPI_mh_info_t mem_hrch;
 
 	// Initialising the library
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
@@ -35,10 +39,22 @@ int main(int argc, char *argv[])
 		printf( "Initialisation of Papi failed \n" );
 		exit(1);
 	}
-			
+
+	if ( (hwinfo = PAPI_get_hardware_info()) == NULL){
+		printf( "Unable to access hw info \n" );
+		return 1;
+	}
+	/* Accessing the cpus per node, threads per core, memory, frequency */
+	printf( "No. of cpus in one node : %d \n", hwinfo ->ncpu );
+	printf( "Threads per core : %d \n", hwinfo ->threads );
+	printf( "No. of cores per socket : %d \n", hwinfo ->cores );
+	printf( "No. of sockets : %d \n", hwinfo ->sockets );
+	printf( "Total CPUS in the entire system : %d \n",  hwinfo ->totalcpus );
+	mem_hrch = hwinfo->mem_hierarchy;
+	printf( "No. of cache levels : %d \n", mem_hrch.levels );
+
 	/* Variables for reading counters of EventSet*/
 	long long eventValues[NUMEVENTS] = {0};
-	long long eventFValues[NUM_FEVENTS] = {0};
 
 	char *file_in = argv[1];
 	char *file_out = argv[2];
@@ -57,8 +73,7 @@ int main(int argc, char *argv[])
 	/** boundary coefficients for each volume cell */
 	double *bs, *be, *bn, *bw, *bl, *bh, *bp, *su;
 
-	float real_time, proc_time, mflops;
-	long long flpins;
+	// Parameters for measuring the time
 	long startusec, endusec;
 
 	//Initializes the library again
