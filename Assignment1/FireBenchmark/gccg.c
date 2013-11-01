@@ -7,7 +7,7 @@
 #include "xread.h"
 #include "xwrite.h"
 #include "binread.h"
-#define NUMEVENTS 2
+#define NUMEVENTS 5
 #define  NUM_FEVENTS 1
 
 int main(int argc, char *argv[])
@@ -108,19 +108,13 @@ int main(int argc, char *argv[])
 			exit(1);
 	}*/
 
-	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA };
+	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA, PAPI_L3_TCM, PAPI_L3_TCA, PAPI_FP_OPS };
 	//Adding events to the eventset
-	if( PAPI_add_events( EventSet, EventCode, 2 ) != PAPI_OK ){
+	if( PAPI_add_events( EventSet, EventCode, 5 ) != PAPI_OK ){
 		printf( "Problem in adding events \n" );
 		exit(1);
 	}
 	printf( "Success in adding events \n" );
-	/*if (( PAPI_add_event(EventSet[0], PAPI_L2_TCM) != PAPI_OK ) &&
-	   ( PAPI_add_event(EventSet[1], PAPI_L3_TCM) != PAPI_OK ) &&
-	   ( PAPI_add_event(EventSet[1], PAPI_L2_TCA) != PAPI_OK ) &&
-	   ( PAPI_add_event(EventSet[1], PAPI_L3_TCA) != PAPI_OK )){
-		exit(1);
-	}*/
 
 	//Adding events to the eventset1
 	/*if (( PAPI_add_event(EventSet1[0], PAPI_TOT_INS) != PAPI_OK ) &&
@@ -236,9 +230,9 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "Initialisation.... \n" );
 	fprintf( res_fp, "INPUT \t PAPT_L2_TCM \t %lld \n", eventValues[0] );
 	fprintf( res_fp, "INPUT \t PAPT_L2_TCA \t %lld \n", eventValues[1] );
-	//fprintf( fp, "No. of L3 cache misses : %lld \n", eventValues[2] );
-	//fprintf( fp, "No. of L3 cache accesses : %lld \n", eventValues[3] );
-
+	fprintf( res_fp, "INPUT \t PAPT_L3_TCM \t %lld \n", eventValues[2] );
+	fprintf( res_fp, "INPUT \t PAPT_L3_TCA \t %lld \n", eventValues[3] );
+	fprintf( res_fp, "INPUT \t PAPT_FP_OPS \t %lld \n", eventValues[4] );
 	/*PAPI_read ( EventSet1[0], eventFValues+0 );
 	PAPI_read ( EventSet1[1], eventFValues+1 );
 	printf ("%lld Floating point instructions executed \n", eventFValues[0] );
@@ -383,8 +377,9 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "Execution time in microseconds for the computation : %lld \n",endusec-startusec);
 	fprintf( res_fp, "CALC \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
 	fprintf( res_fp, "CALC \t PAPI_L2_TCA \t %lld \n", eventValues[1] );
-	//fprintf( fp, "No. of L3 cache misses : %lld \n", eventValues[2] );
-	//fprintf( fp, "No. of L3 cache accesses : %lld \n", eventValues[3] );
+	fprintf( res_fp, "CALC \t PAPI_L3_TCM \t %lld \n", eventValues[2] );
+	fprintf( res_fp, "CALC \t PAPI_L3_TCA \t %lld \n", eventValues[3] );
+	fprintf( res_fp, "CALC \t PAPT_FP_OPS \t %lld \n", eventValues[4] );
 
 /*	PAPI_read ( EventSet1[0], eventFValues+0 );
 	PAPI_read ( EventSet1[1], eventFValues+1 );
