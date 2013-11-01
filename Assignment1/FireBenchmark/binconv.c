@@ -6,7 +6,7 @@ int main( int argc, char *argv[] ){
 
 	if( argc < 3 ){
 			printf("Usage: %s input_file output_file\n", argv[0]);
-			return EXIT_FAILURE;
+			return 1;
 	}
 
 	// File pointers for opening the file streams
