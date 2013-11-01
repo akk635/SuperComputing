@@ -7,12 +7,12 @@
 #include "xread.h"
 #include "xwrite.h"
 #include "binread.h"
-#define NUMEVENTS 1
+#define NUMEVENTS 4
 #define  NUM_FEVENTS 1
 
 int main(int argc, char *argv[])
 {
-	if( argc < 3 )
+	if( argc < 4 )
 	{
 		printf("Usage: %s format_file input_file output_file\n", argv[0]);
 		return EXIT_FAILURE;
@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
 		printf( "Unable to access hw info \n" );
 		return 1;
 	}
+
 	/* Accessing the cpus per node, threads per core, memory, frequency */
 	printf( "No. of cpus in one node : %d \n", hwinfo ->ncpu );
 	printf( "Threads per core : %d \n", hwinfo ->threads );
@@ -60,9 +61,19 @@ int main(int argc, char *argv[])
 	/* Variables for reading counters of EventSet*/
 	long long eventValues[NUMEVENTS] = {0};
 
-	char *file_in = argv[1];
-	char *file_out = argv[2];
+	char *format = argv[1];
+	char *file_in = argv[2];
+	char *file_out = argv[3];
 
+	char delim[] = ".";
+	char *cp;
+	printf( "cp is decl \n" );
+	strcpy( cp, file_in );
+	printf( "I am here : %s \n", cp );
+	char* token = strtok( cp, delim );
+	printf( "token : %s \n", token );
+
+	FILE *fp = fopen( strcat( strcat( file_out, token ), ".txt" ), "w" );
 	int status = 0;
 
 	/** internal cells start and end index*/
@@ -78,7 +89,7 @@ int main(int argc, char *argv[])
 	double *bs, *be, *bn, *bw, *bl, *bh, *bp, *su;
 
 	// Parameters for measuring the time
-	long startusec, endusec;
+	long long startusec, endusec;
 
 	//Initializes the library again
 	//PAPI_flops(&real_time, &proc_time, &flpins, &mflops) ;
@@ -94,10 +105,10 @@ int main(int argc, char *argv[])
 			exit(1);
 	}*/
 
-	int EventCode[ NUMEVENTS ] = {  PAPI_FP_OPS };
+	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA, PAPI_L3_TCM, PAPI_L3_TCA };
 
 	//Adding events to the eventset
-	if( PAPI_add_events( EventSet, EventCode, 1 ) != PAPI_OK ){
+	if( PAPI_add_events( EventSet, EventCode, 4 ) != PAPI_OK ){
 		printf( "Problem in adding events \n" );
 		exit(1);
 	}
@@ -115,28 +126,28 @@ int main(int argc, char *argv[])
 			exit(1);
 	}*/
 
-	//Num of counters the system is supports at a time
-	int hw_counters = PAPI_num_counters();
-	printf ("No. of counters supported: %d \n", hw_counters);
-
 	// Start the eventset counters
 	PAPI_start ( EventSet );
 	/*PAPI_start (EventSet[1]);
 	PAPI_start (EventSet[2]);
 	PAPI_start (EventSet[3]);*/
-	/*PAPI_start (EventSet1[0]);
-	PAPI_start (EventSet1[1]);*/
 
 	startusec = PAPI_get_real_usec();
 
 	/* initialization  */
 	// read-in the input file
-	int f_status = read_bin_formatted(file_in, &nintci, &nintcf, &nextci, &nextcf, &lcc,
-			&bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &nboard);
+	int f_status;
+	if( strcmp( format, "bin" ) ){
+		f_status = read_bin_formatted(file_in, &nintci, &nintcf, &nextci, &nextcf, &lcc,
+					&bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &nboard);
+	} else if( strcmp( format, "txt" ) ){
+		f_status = read_formatted(file_in, &nintci, &nintcf, &nextci, &nextcf, &lcc,
+					&bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &nboard);
+	}
 
 	if (f_status != 0)
 	{
-		printf("failed to initialize data!\n");
+		fprintf( fp, "failed to initialize data! \n");
 		return EXIT_FAILURE;
 	}
 
@@ -215,15 +226,16 @@ int main(int argc, char *argv[])
 	/* finished initalization */
 
 	endusec = PAPI_get_real_usec();
-	printf("Execution time in microseconds for the initialisation: %ld \n",endusec-startusec);
 
 	//Read the eventSet counters
 	PAPI_read ( EventSet, eventValues );
-	/*PAPI_read ( EventSet[1], eventValues+1 );
-	PAPI_read ( EventSet[2], eventValues+2 );
-	PAPI_read ( EventSet[3], eventValues+3 );*/
-	printf("%lld L2 cache misses  \n", eventValues[0]);
-	//printf("%lld L2 cache accesses \n", eventValues[1]);
+
+	fprintf( fp, "Execution time in microseconds for the initialisation: %ld \n",endusec-startusec );
+	fprintf( fp, "Initialisation.... \n" );
+	fprintf( fp, "No. of L2 cache misses : %lld \n", eventValues[0] );
+	fprintf( fp, "No. of L2 cache accesses : %lld \n", eventValues[1] );
+	fprintf( fp, "No. of L3 cache misses : %lld \n", eventValues[2] );
+	fprintf( fp, "No. of L3 cache accesses : %lld \n", eventValues[3] );
 	//printf("%lld fp ops \n", eventValues[2]);
 	//printf("%lld L3 cache accesses \n", eventValues[3]);
 
@@ -240,7 +252,7 @@ int main(int argc, char *argv[])
 	/*PAPI_reset ( EventSet1[0] );
 	PAPI_reset ( EventSet1[1] );*/
 	
-	printf ("Starting with the computation part \n");
+	fprintf ( fp, "Starting with the computation part \n" );
 	startusec = PAPI_get_real_usec();
 
 	/* start computation loop */
@@ -362,17 +374,17 @@ int main(int argc, char *argv[])
 
 	/* finished computation loop */
 	endusec = PAPI_get_real_usec();
-	printf("Execution time in microseconds for the initialisation: %ld \n",endusec-startusec);
 
 	//Read the eventSet counters
 	PAPI_stop ( EventSet, eventValues );
 	/*PAPI_stop ( EventSet[1], eventValues+1 );
 	PAPI_stop ( EventSet[2], eventValues+2 );
 	PAPI_stop ( EventSet[3], eventValues+3 );*/
-	printf("%lld L2 cache misses  \n", eventValues[0]);
-	//printf("%lld L2 cache accesses \n", eventValues[1]);
-	//printf("%lld fp ops \n", eventValues[2]);
-	//printf("%lld L3 cache accesses \n", eventValues[3]);
+	fprintf( fp, "Execution time in microseconds for the computation : %lld \n",endusec-startusec);
+	fprintf( fp, "No. of L2 cache misses : %lld \n", eventValues[0] );
+	fprintf( fp, "No. of L2 cache accesses : %lld \n", eventValues[1] );
+	fprintf( fp, "No. of L3 cache misses : %lld \n", eventValues[2] );
+	fprintf( fp, "No. of L3 cache accesses : %lld \n", eventValues[3] );
 
 /*	PAPI_read ( EventSet1[0], eventFValues+0 );
 	PAPI_read ( EventSet1[1], eventFValues+1 );
@@ -389,5 +401,7 @@ int main(int argc, char *argv[])
 	free(bh); free(bl); free(bw); free(bn); free(be); free(bs);
 
 	printf("Simulation completed successfully!\n");
+
+	fclose( fp );
 	return EXIT_SUCCESS;
 }
