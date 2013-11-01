@@ -7,8 +7,8 @@
 #include "xread.h"
 #include "xwrite.h"
 #include "binread.h"
-#define NUMEVENTS 5
-#define  NUM_FEVENTS 1
+#define NUMEVENTS 4
+#define  NUM_FPEVENTS 1
 
 int main(int argc, char *argv[])
 {
@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
 
 	//EventSet for L2 & L3 cache misses and accesses
 	int EventSet = PAPI_NULL;
+	int EventSet1 = PAPI_NULL;
 
 	//Eventset for calculating the mflops
 	// int EventSet1[NUM_FEVENTS] = { PAPI_NULL };
@@ -59,7 +60,8 @@ int main(int argc, char *argv[])
 	printf( "Size of L2 cache : %d \n", L2_size );
 
 	/* Variables for reading counters of EventSet*/
-	long long eventValues[NUMEVENTS] = {0};
+	long long eventValues[ NUMEVENTS ] = {0};
+	long long eventFpValue[ NUM_FPEVENTS ] = {0};
 
 	char *format = argv[1];
 	char *file_in = argv[2];
@@ -104,15 +106,21 @@ int main(int argc, char *argv[])
 	}
 
 	//Create the Flops eventSet
-	/*if ( PAPI_create_eventset(EventSet1) != PAPI_OK ) {
-			exit(1);
-	}*/
-
-	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA, PAPI_L3_TCM, PAPI_L3_TCA, PAPI_FP_OPS };
-	//Adding events to the eventset
-	if( PAPI_add_events( EventSet, EventCode, 5 ) != PAPI_OK ){
-		printf( "Problem in adding events \n" );
+	if ( PAPI_create_eventset( &EventSet1 ) != PAPI_OK ) {
+		printf( "Problem in creating the flops eventset \n" );
 		exit(1);
+	}
+
+	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA, PAPI_L3_TCM, PAPI_L3_TCA };
+	int EventFpCode[ NUM_FPEVENTS ] = { PAPI_FP_OPS };
+	//Adding events to the eventset
+	if( PAPI_add_events( EventSet, EventCode, 4 ) != PAPI_OK ){
+		printf( "Problem in adding events \n" );
+		exit( 1 );
+	}
+	if( PAPI_add_events( EventSet1, EventFpCode, 1 ) != PAPI_OK ){
+		printf( "Problem in adding the flops event \n" );
+		exit( 1 );
 	}
 	printf( "Success in adding events \n" );
 
