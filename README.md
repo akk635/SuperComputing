@@ -1,4 +1,0 @@
-SuperComputing
-==============
-
-Programming of SuperComputing

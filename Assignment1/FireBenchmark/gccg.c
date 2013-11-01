@@ -7,7 +7,7 @@
 #include "xread.h"
 #include "xwrite.h"
 #include "binread.h"
-#define NUMEVENTS 4
+#define NUMEVENTS 2
 #define  NUM_FEVENTS 1
 
 int main(int argc, char *argv[])
@@ -66,15 +66,18 @@ int main(int argc, char *argv[])
 	char *file_out = argv[3];
 
 	char delim[] = ".";
-	char *cp;
-	printf( "cp is decl \n" );
-	strcpy( cp, file_in );
-	printf( "I am here : %s \n", cp );
-	char* token = strtok( cp, delim );
-	printf( "token : %s \n", token );
+	char *cp = (char *) malloc( sizeof( char ) * 10 );
+	cp = strcpy( cp, file_in );
+	char *token = malloc( sizeof(char) * 10 );
+	token = strtok( cp, delim );
+	char * res_file = malloc( sizeof( char ) * 20 );
+	res_file = strcpy( res_file, file_out );
+	res_file = strcat( res_file, token );
+	free (cp);
 
-	FILE *fp = fopen( strcat( strcat( file_out, token ), ".txt" ), "w" );
+	FILE * res_fp = fopen( strcat( res_file, "_psdats.dat") , "w" );
 	int status = 0;
+	free( res_file );
 
 	/** internal cells start and end index*/
 	int nintci, nintcf;
@@ -105,10 +108,9 @@ int main(int argc, char *argv[])
 			exit(1);
 	}*/
 
-	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA, PAPI_L3_TCM, PAPI_L3_TCA };
-
+	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA };
 	//Adding events to the eventset
-	if( PAPI_add_events( EventSet, EventCode, 4 ) != PAPI_OK ){
+	if( PAPI_add_events( EventSet, EventCode, 2 ) != PAPI_OK ){
 		printf( "Problem in adding events \n" );
 		exit(1);
 	}
@@ -137,17 +139,17 @@ int main(int argc, char *argv[])
 	/* initialization  */
 	// read-in the input file
 	int f_status;
-	if( strcmp( format, "bin" ) ){
+	if( !strcmp( format, "bin" ) ){
 		f_status = read_bin_formatted(file_in, &nintci, &nintcf, &nextci, &nextcf, &lcc,
 					&bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &nboard);
-	} else if( strcmp( format, "txt" ) ){
+	} else if( !strcmp( format, "txt" ) ){
 		f_status = read_formatted(file_in, &nintci, &nintcf, &nextci, &nextcf, &lcc,
 					&bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &nboard);
 	}
 
 	if (f_status != 0)
 	{
-		fprintf( fp, "failed to initialize data! \n");
+		printf( "failed to initialize data! \n" );
 		return EXIT_FAILURE;
 	}
 
@@ -230,14 +232,12 @@ int main(int argc, char *argv[])
 	//Read the eventSet counters
 	PAPI_read ( EventSet, eventValues );
 
-	fprintf( fp, "Execution time in microseconds for the initialisation: %ld \n",endusec-startusec );
-	fprintf( fp, "Initialisation.... \n" );
-	fprintf( fp, "No. of L2 cache misses : %lld \n", eventValues[0] );
-	fprintf( fp, "No. of L2 cache accesses : %lld \n", eventValues[1] );
-	fprintf( fp, "No. of L3 cache misses : %lld \n", eventValues[2] );
-	fprintf( fp, "No. of L3 cache accesses : %lld \n", eventValues[3] );
-	//printf("%lld fp ops \n", eventValues[2]);
-	//printf("%lld L3 cache accesses \n", eventValues[3]);
+	fprintf( res_fp, "Execution time in microseconds for the initialisation: %lld \n",endusec-startusec );
+	fprintf( res_fp, "Initialisation.... \n" );
+	fprintf( res_fp, "INPUT \t PAPT_L2_TCM \t %lld \n", eventValues[0] );
+	fprintf( res_fp, "INPUT \t PAPT_L2_TCA \t %lld \n", eventValues[1] );
+	//fprintf( fp, "No. of L3 cache misses : %lld \n", eventValues[2] );
+	//fprintf( fp, "No. of L3 cache accesses : %lld \n", eventValues[3] );
 
 	/*PAPI_read ( EventSet1[0], eventFValues+0 );
 	PAPI_read ( EventSet1[1], eventFValues+1 );
@@ -252,7 +252,7 @@ int main(int argc, char *argv[])
 	/*PAPI_reset ( EventSet1[0] );
 	PAPI_reset ( EventSet1[1] );*/
 	
-	fprintf ( fp, "Starting with the computation part \n" );
+	fprintf ( res_fp, "Starting with the computation part \n" );
 	startusec = PAPI_get_real_usec();
 
 	/* start computation loop */
@@ -380,11 +380,11 @@ int main(int argc, char *argv[])
 	/*PAPI_stop ( EventSet[1], eventValues+1 );
 	PAPI_stop ( EventSet[2], eventValues+2 );
 	PAPI_stop ( EventSet[3], eventValues+3 );*/
-	fprintf( fp, "Execution time in microseconds for the computation : %lld \n",endusec-startusec);
-	fprintf( fp, "No. of L2 cache misses : %lld \n", eventValues[0] );
-	fprintf( fp, "No. of L2 cache accesses : %lld \n", eventValues[1] );
-	fprintf( fp, "No. of L3 cache misses : %lld \n", eventValues[2] );
-	fprintf( fp, "No. of L3 cache accesses : %lld \n", eventValues[3] );
+	fprintf( res_fp, "Execution time in microseconds for the computation : %lld \n",endusec-startusec);
+	fprintf( res_fp, "CALC \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
+	fprintf( res_fp, "CALC \t PAPI_L2_TCA \t %lld \n", eventValues[1] );
+	//fprintf( fp, "No. of L3 cache misses : %lld \n", eventValues[2] );
+	//fprintf( fp, "No. of L3 cache accesses : %lld \n", eventValues[3] );
 
 /*	PAPI_read ( EventSet1[0], eventFValues+0 );
 	PAPI_read ( EventSet1[1], eventFValues+1 );
@@ -402,6 +402,6 @@ int main(int argc, char *argv[])
 
 	printf("Simulation completed successfully!\n");
 
-	fclose( fp );
+	fclose( res_fp );
 	return EXIT_SUCCESS;
 }
