@@ -378,8 +378,8 @@ int main(int argc, char *argv[])
 
 	L2_cache_miss_rate = ( eventValues[0] / eventValues[1] ) * 100;
 	L3_cache_miss_rate = ( eventValues[2] / eventValues[3] ) * 100;
-	fprintf( res_fp, "CALC \t L2MissRate \t %lld \n", L2_cache_miss_rate );
-	fprintf( res_fp, "CALC \t L3MissRate \t %lld \n", L3_cache_miss_rate );
+	fprintf( res_fp, "CALC \t L2MissRate \t %lld %\n", L2_cache_miss_rate );
+	fprintf( res_fp, "CALC \t L3MissRate \t %lld %\n", L3_cache_miss_rate );
 
 	/* write output file  */
 	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 )
