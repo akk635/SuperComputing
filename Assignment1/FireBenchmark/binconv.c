@@ -1,5 +1,6 @@
 /*For converting the text file into binary file*/
 #include <stdio.h>
+#include "binread.h"
 
 int main( int argc, char *argv[] ){
 

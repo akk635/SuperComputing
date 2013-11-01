@@ -6,14 +6,15 @@
 #include <papi.h>
 #include "xread.h"
 #include "xwrite.h"
-#define NUMEVENTS 4
-#define  NUM_FEVENTS 2
+#include "binread.h"
+#define NUMEVENTS 1
+#define  NUM_FEVENTS 1
 
 int main(int argc, char *argv[])
 {
 	if( argc < 3 )
 	{
-		printf("Usage: %s input_file output_file\n", argv[0]);
+		printf("Usage: %s format_file input_file output_file\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 
@@ -21,9 +22,9 @@ int main(int argc, char *argv[])
 	int retval;
 
 	//EventSet for L2 & L3 cache misses and accesses
-	int EventSet[NUMEVENTS] = {PAPI_NULL};
+	int EventSet = PAPI_NULL;
 	//Eventset for calculating the mflops
-	int EventSet1[NUM_FEVENTS] = {PAPI_NULL};
+	// int EventSet1[NUM_FEVENTS] = { PAPI_NULL };
 	// Data pointer for getting the cpu info
 	// const PAPI_hw_info_t * hwinfo = NULL;
 
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
 	retval = PAPI_library_init( PAPI_VER_CURRENT );
 
 	if (retval != PAPI_VER_CURRENT) {
-		printf( "Initialisation of Papi failed" );
+		printf( "Initialisation of Papi failed \n" );
 		exit(1);
 	}
 			
@@ -64,45 +65,54 @@ int main(int argc, char *argv[])
 	//PAPI_flops(&real_time, &proc_time, &flpins, &mflops) ;
 
 	// Creating the eventSets
-	if (PAPI_create_eventset(EventSet) != PAPI_OK) {
+	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK ) {
+		printf( "Problem in create eventset \n" );
 		exit(1);
 	}
 
 	//Create the Flops eventSet
-	if (PAPI_create_eventset(EventSet1) != PAPI_OK) {
+	/*if ( PAPI_create_eventset(EventSet1) != PAPI_OK ) {
 			exit(1);
-	}
+	}*/
+
+	int EventCode[ NUMEVENTS ] = {  PAPI_FP_OPS };
 
 	//Adding events to the eventset
-	if (( PAPI_add_event(EventSet[0], PAPI_L2_TCM) != PAPI_OK ) &&
+	if( PAPI_add_events( EventSet, EventCode, 1 ) != PAPI_OK ){
+		printf( "Problem in adding events \n" );
+		exit(1);
+	}
+	printf( "Success in adding events \n" );
+	/*if (( PAPI_add_event(EventSet[0], PAPI_L2_TCM) != PAPI_OK ) &&
 	   ( PAPI_add_event(EventSet[1], PAPI_L3_TCM) != PAPI_OK ) &&
 	   ( PAPI_add_event(EventSet[1], PAPI_L2_TCA) != PAPI_OK ) &&
 	   ( PAPI_add_event(EventSet[1], PAPI_L3_TCA) != PAPI_OK )){
 		exit(1);
-	}
+	}*/
 
 	//Adding events to the eventset1
-	if (( PAPI_add_event(EventSet1[0], PAPI_TOT_INS) != PAPI_OK ) &&
+	/*if (( PAPI_add_event(EventSet1[0], PAPI_TOT_INS) != PAPI_OK ) &&
 	   ( PAPI_add_event(EventSet1[1], PAPI_TOT_CYC) != PAPI_OK ) ){
 			exit(1);
-	}
+	}*/
 
 	//Num of counters the system is supports at a time
 	int hw_counters = PAPI_num_counters();
 	printf ("No. of counters supported: %d \n", hw_counters);
 
 	// Start the eventset counters
-	PAPI_start (EventSet[0]);
-	PAPI_start (EventSet[1]);
+	PAPI_start ( EventSet );
+	/*PAPI_start (EventSet[1]);
 	PAPI_start (EventSet[2]);
-	PAPI_start (EventSet[3]);
-	PAPI_start (EventSet1[0]);
-	PAPI_start (EventSet1[1]);
+	PAPI_start (EventSet[3]);*/
+	/*PAPI_start (EventSet1[0]);
+	PAPI_start (EventSet1[1]);*/
+
 	startusec = PAPI_get_real_usec();
 
 	/* initialization  */
 	// read-in the input file
-	int f_status = read_formatted(file_in, &nintci, &nintcf, &nextci, &nextcf, &lcc,
+	int f_status = read_bin_formatted(file_in, &nintci, &nintcf, &nextci, &nextcf, &lcc,
 			&bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &nboard);
 
 	if (f_status != 0)
@@ -189,34 +199,34 @@ int main(int argc, char *argv[])
 	printf("Execution time in microseconds for the initialisation: %ld \n",endusec-startusec);
 
 	//Read the eventSet counters
-	PAPI_stop ( EventSet[0], eventValues+0 );
-	PAPI_read ( EventSet[1], eventValues+1 );
+	PAPI_read ( EventSet, eventValues );
+	/*PAPI_read ( EventSet[1], eventValues+1 );
 	PAPI_read ( EventSet[2], eventValues+2 );
-	PAPI_read ( EventSet[3], eventValues+3 );
+	PAPI_read ( EventSet[3], eventValues+3 );*/
 	printf("%lld L2 cache misses  \n", eventValues[0]);
-	printf("%lld L3 cache misses \n", eventValues[1]);
-	printf("%lld L2 cache accesses \n", eventValues[2]);
-	printf("%lld L3 cache accesses \n", eventValues[3]);
+	//printf("%lld L2 cache accesses \n", eventValues[1]);
+	//printf("%lld fp ops \n", eventValues[2]);
+	//printf("%lld L3 cache accesses \n", eventValues[3]);
 
-	PAPI_read ( EventSet1[0], eventFValues+0 );
+	/*PAPI_read ( EventSet1[0], eventFValues+0 );
 	PAPI_read ( EventSet1[1], eventFValues+1 );
 	printf ("%lld Floating point instructions executed \n", eventFValues[0] );
-	printf ("%lld Total cycles \n", eventFValues[1] );
+	printf ("%lld Total cycles \n", eventFValues[1] );*/
 
 	//Resetting the event counters
-	PAPI_start ( EventSet[0] );
-	PAPI_reset ( EventSet[1] );
+	PAPI_reset ( EventSet );
+	/*PAPI_reset ( EventSet[1] );
 	PAPI_reset ( EventSet[2] );
-	PAPI_reset ( EventSet[3] );
-	PAPI_reset ( EventSet1[0] );
-	PAPI_reset ( EventSet1[1] );
+	PAPI_reset ( EventSet[3] );*/
+	/*PAPI_reset ( EventSet1[0] );
+	PAPI_reset ( EventSet1[1] );*/
 	
 	printf ("Starting with the computation part \n");
 	startusec = PAPI_get_real_usec();
+
 	/* start computation loop */
 	while (iter < 10000)
 	{
-
 		/* start phase 1 */
 
 		// update the old values of direc
@@ -336,20 +346,19 @@ int main(int argc, char *argv[])
 	printf("Execution time in microseconds for the initialisation: %ld \n",endusec-startusec);
 
 	//Read the eventSet counters
-	PAPI_read ( EventSet[0], eventValues+0 );
-	PAPI_read ( EventSet[1], eventValues+1 );
-	PAPI_read ( EventSet[2], eventValues+2 );
-	PAPI_read ( EventSet[3], eventValues+3 );
+	PAPI_stop ( EventSet, eventValues );
+	/*PAPI_stop ( EventSet[1], eventValues+1 );
+	PAPI_stop ( EventSet[2], eventValues+2 );
+	PAPI_stop ( EventSet[3], eventValues+3 );*/
 	printf("%lld L2 cache misses  \n", eventValues[0]);
-	printf("%lld L3 cache misses \n", eventValues[1]);
-	printf("%lld L2 cache accesses \n", eventValues[2]);
-	printf("%lld L3 cache accesses \n", eventValues[3]);
+	//printf("%lld L2 cache accesses \n", eventValues[1]);
+	//printf("%lld fp ops \n", eventValues[2]);
+	//printf("%lld L3 cache accesses \n", eventValues[3]);
 
-	PAPI_read ( EventSet1[0], eventFValues+0 );
+/*	PAPI_read ( EventSet1[0], eventFValues+0 );
 	PAPI_read ( EventSet1[1], eventFValues+1 );
 	printf ("%lld Floating point instructions executed \n", eventFValues[0] );
-	printf ("%lld Total cycles \n", eventFValues[1] );
-
+	printf ("%lld Total cycles \n", eventFValues[1] );*/
 
 	/* write output file  */
 	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 )

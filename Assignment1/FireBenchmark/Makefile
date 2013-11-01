@@ -13,7 +13,7 @@ LIBS = -lm  -lpapi
 CFLAGS += $(PAPI_INC)
 LIBS += $(PAPI_LIB)
 
-SRCS = xread.c xwrite.c gccg.c vol2mesh.c
+SRCS = xread.c xwrite.c gccg.c vol2mesh.c binread.c
 OBJS =  $(addsuffix .o, $(basename $(SRCS)))
 
 all: gccg 
