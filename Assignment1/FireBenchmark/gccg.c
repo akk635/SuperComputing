@@ -234,8 +234,8 @@ int main(int argc, char *argv[])
 
 	// Cache miss rate calculations
 	float L2_cache_miss_rate, L3_cache_miss_rate;
-	L2_cache_miss_rate = ( eventValues[0] / eventValues[1] ) * 100;
-	L3_cache_miss_rate = ( eventValues[2] / eventValues[3] ) * 100;
+	L2_cache_miss_rate = ( (float) eventValues[0] / eventValues[1] ) * 100;
+	L3_cache_miss_rate = ( (float) eventValues[2] / eventValues[3] ) * 100;
 	fprintf( res_fp, "INPUT \t L2MissRate \t %f% \n", L2_cache_miss_rate );
 	fprintf( res_fp, "INPUT \t L3MissRate \t %f% \n", L3_cache_miss_rate );
 	//Resetting the event counters
@@ -376,8 +376,8 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "CALC \t PAPI_L3_TCA \t %lld \n", eventValues[3] );
 	//fprintf( res_fp, "CALC \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
 
-	L2_cache_miss_rate = ( eventValues[0] / eventValues[1] ) * 100;
-	L3_cache_miss_rate = ( eventValues[2] / eventValues[3] ) * 100;
+	L2_cache_miss_rate = ( (float) eventValues[0] / eventValues[1] ) * 100;
+	L3_cache_miss_rate = ( (float) eventValues[2] / eventValues[3] ) * 100;
 	fprintf( res_fp, "CALC \t L2MissRate \t %f%\n", L2_cache_miss_rate );
 	fprintf( res_fp, "CALC \t L3MissRate \t %f%\n", L3_cache_miss_rate );
 
