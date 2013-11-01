@@ -52,6 +52,10 @@ int main(int argc, char *argv[])
 	printf( "Total CPUS in the entire system : %d \n",  hwinfo ->totalcpus );
 	mem_hrch = hwinfo->mem_hierarchy;
 	printf( "No. of cache levels : %d \n", mem_hrch.levels );
+	int L1_size = mem_hrch.level[0].cache[0].size;
+	printf( "Size of L1 cache : %d \n", L1_size );
+	int L2_size = mem_hrch.level[1].cache[1].size;
+	printf( "Size of L2 cache : %d \n", L2_size );
 
 	/* Variables for reading counters of EventSet*/
 	long long eventValues[NUMEVENTS] = {0};
