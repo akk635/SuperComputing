@@ -22,11 +22,8 @@ int main(int argc, char *argv[])
 	int retval;
 
 	//EventSet for L2 & L3 cache misses and accesses
-	int EventSet = PAPI_NULL;
+	// int EventSet = PAPI_NULL;
 	int EventSet1 = PAPI_NULL;
-
-	//Eventset for calculating the mflops
-	// int EventSet1[NUM_FEVENTS] = { PAPI_NULL };
 
 	// Data pointer for getting the cpu info
 	const PAPI_hw_info_t * hwinfo = NULL;
@@ -52,15 +49,9 @@ int main(int argc, char *argv[])
 	printf( "No. of cores per socket : %d \n", hwinfo ->cores );
 	printf( "No. of sockets : %d \n", hwinfo ->sockets );
 	printf( "Total CPUS in the entire system : %d \n",  hwinfo ->totalcpus );
-	mem_hrch = hwinfo->mem_hierarchy;
-	printf( "No. of cache levels : %d \n", mem_hrch.levels );
-	int L1_size = mem_hrch.level[0].cache[0].size;
-	printf( "Size of L1 cache : %d \n", L1_size );
-	int L2_size = mem_hrch.level[1].cache[1].size;
-	printf( "Size of L2 cache : %d \n", L2_size );
 
 	/* Variables for reading counters of EventSet*/
-	long long eventValues[ NUMEVENTS ] = {0};
+	//long long eventValues[ NUMEVENTS ] = {0};
 	long long eventFpValue[ NUM_FPEVENTS ] = {0};
 
 	char *format = argv[1];
@@ -96,9 +87,6 @@ int main(int argc, char *argv[])
 	// Parameters for measuring the time
 	long long startusec, endusec;
 
-	//Initializes the library again
-	//PAPI_flops(&real_time, &proc_time, &flpins, &mflops) ;
-
 	// Creating the eventSets
 	/*if ( PAPI_create_eventset( &EventSet ) != PAPI_OK ) {
 		printf( "Problem in create eventset \n" );
@@ -124,18 +112,10 @@ int main(int argc, char *argv[])
 	}
 	printf( "Success in adding events \n" );
 
-	//Adding events to the eventset1
-	/*if (( PAPI_add_event(EventSet1[0], PAPI_TOT_INS) != PAPI_OK ) &&
-	   ( PAPI_add_event(EventSet1[1], PAPI_TOT_CYC) != PAPI_OK ) ){
-			exit(1);
-	}*/
 
 	// Start the eventset counters
 	// PAPI_start( EventSet );
 	PAPI_start( EventSet1 );
-	/*PAPI_start (EventSet[1]);
-	PAPI_start (EventSet[2]);
-	PAPI_start (EventSet[3]);*/
 
 	startusec = PAPI_get_real_usec();
 
@@ -236,26 +216,20 @@ int main(int argc, char *argv[])
 	//PAPI_read( EventSet, eventValues );
 	PAPI_read( EventSet1, eventFpValue );
 
-	fprintf( res_fp, "Execution time in microseconds for the initialisation: %lld \n",endusec-startusec );
+	fprintf( res_fp, "Execution time in microseconds for the initialisation: %lld \n", endusec-startusec );
 	fprintf( res_fp, "Initialisation.... \n" );
 	/*fprintf( res_fp, "INPUT \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
 	fprintf( res_fp, "INPUT \t PAPI_L2_TCA \t %lld \n", eventValues[1] );
 	fprintf( res_fp, "INPUT \t PAPI_L3_TCM \t %lld \n", eventValues[2] );
 	fprintf( res_fp, "INPUT \t PAPI_L3_TCA \t %lld \n", eventValues[3] );*/
 	fprintf( res_fp, "INPUT \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
-	/*PAPI_read ( EventSet1[0], eventFValues+0 );
-	PAPI_read ( EventSet1[1], eventFValues+1 );
-	printf ("%lld Floating point instructions executed \n", eventFValues[0] );
-	printf ("%lld Total cycles \n", eventFValues[1] );*/
 
+	float mflops;
+	mflops = (float) eventFpValue[0] / (endusec-startusec);
+	fprintf( res_fp, "INPUT \t MegaFlops \t %f \n", mflops );
 	//Resetting the event counters
 	//PAPI_reset( EventSet );
 	PAPI_reset( EventSet1 );
-	/*PAPI_reset ( EventSet[1] );
-	PAPI_reset ( EventSet[2] );
-	PAPI_reset ( EventSet[3] );*/
-	/*PAPI_reset ( EventSet1[0] );
-	PAPI_reset ( EventSet1[1] );*/
 	
 	fprintf ( res_fp, "Starting with the computation part \n" );
 	startusec = PAPI_get_real_usec();
@@ -383,9 +357,7 @@ int main(int argc, char *argv[])
 	//Read the eventSet counters
 	//PAPI_stop( EventSet, eventValues );
 	PAPI_stop( EventSet1, eventFpValue );
-	/*PAPI_stop ( EventSet[1], eventValues+1 );
-	PAPI_stop ( EventSet[2], eventValues+2 );
-	PAPI_stop ( EventSet[3], eventValues+3 );*/
+
 	fprintf( res_fp, "Execution time in microseconds for the computation : %lld \n",endusec-startusec);
 	/*fprintf( res_fp, "CALC \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
 	fprintf( res_fp, "CALC \t PAPI_L2_TCA \t %lld \n", eventValues[1] );
@@ -393,10 +365,8 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "CALC \t PAPI_L3_TCA \t %lld \n", eventValues[3] );*/
 	fprintf( res_fp, "CALC \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
 
-/*	PAPI_read ( EventSet1[0], eventFValues+0 );
-	PAPI_read ( EventSet1[1], eventFValues+1 );
-	printf ("%lld Floating point instructions executed \n", eventFValues[0] );
-	printf ("%lld Total cycles \n", eventFValues[1] );*/
+	mflops = (float) eventFpValue[0] / (endusec-startusec);
+	fprintf( res_fp, "CALC \t MegaFlops \t %f \n", mflops );
 
 	/* write output file  */
 	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 )
