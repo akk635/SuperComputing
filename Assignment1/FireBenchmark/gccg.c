@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	int retval;
 
 	//EventSet for L2 & L3 cache misses and accesses
-	// int EventSet = PAPI_NULL;
+	//int EventSet = PAPI_NULL;
 	int EventSet1 = PAPI_NULL;
 
 	// Data pointer for getting the cpu info
@@ -51,13 +51,9 @@ int main(int argc, char *argv[])
 	printf( "Total CPUS in the entire system : %d \n",  hwinfo ->totalcpus );
 
 	/* Variables for reading counters of EventSet*/
-<<<<<<< HEAD
-	long long eventValues[ NUMEVENTS ] = {0};
-	//long long eventFpValue[ NUM_FPEVENTS ] = {0};
-=======
 	//long long eventValues[ NUMEVENTS ] = {0};
 	long long eventFpValue[ NUM_FPEVENTS ] = {0};
->>>>>>> flops
+
 
 	char *format = argv[1];
 	char *file_in = argv[2];
@@ -93,39 +89,34 @@ int main(int argc, char *argv[])
 	long long startusec, endusec;
 
 	// Creating the eventSets
-	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK ) {
+	/*if ( PAPI_create_eventset( &EventSet ) != PAPI_OK ) {
 		printf( "Problem in create eventset \n" );
 		exit(1);
-	}
+	}*/
 
 	//Create the Flops eventSet
-	/*if ( PAPI_create_eventset( &EventSet1 ) != PAPI_OK ) {
+	if ( PAPI_create_eventset( &EventSet1 ) != PAPI_OK ) {
 		printf( "Problem in creating the flops eventset \n" );
 		exit(1);
-	}*/
+	}
 
-	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA, PAPI_L3_TCM, PAPI_L3_TCA };
-	//int EventFpCode[ NUM_FPEVENTS ] = { PAPI_FP_OPS };
+	//int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA, PAPI_L3_TCM, PAPI_L3_TCA };
+	int EventFpCode[ NUM_FPEVENTS ] = { PAPI_FP_OPS };
 	//Adding events to the eventset
-	if( PAPI_add_events( EventSet, EventCode, NUMEVENTS ) != PAPI_OK ){
+	/*if( PAPI_add_events( EventSet, EventCode, NUMEVENTS ) != PAPI_OK ){
 		printf( "Problem in adding events \n" );
 		exit( 1 );
-	}
-	/*if( PAPI_add_events( EventSet1, EventFpCode, 1 ) != PAPI_OK ){
+	}*/
+	if( PAPI_add_events( EventSet1, EventFpCode, 1 ) != PAPI_OK ){
 		printf( "Problem in adding the flops event \n" );
 		exit( 1 );
-	}*/
+	}
 	printf( "Success in adding events \n" );
 
 
 	// Start the eventset counters
-<<<<<<< HEAD
-	PAPI_start( EventSet );
-	//PAPI_start( EventSet1 );
-=======
 	// PAPI_start( EventSet );
 	PAPI_start( EventSet1 );
->>>>>>> flops
 
 	startusec = PAPI_get_real_usec();
 
@@ -223,28 +214,14 @@ int main(int argc, char *argv[])
 	endusec = PAPI_get_real_usec();
 
 	//Read the eventSet counters
-	PAPI_read( EventSet, eventValues );
-	//PAPI_read( EventSet1, eventFpValue );
+	//PAPI_read( EventSet, eventValues );
+	PAPI_read( EventSet1, eventFpValue );
 
 	fprintf( res_fp, "Execution time in microseconds for the initialisation: %lld \n", endusec-startusec );
 	fprintf( res_fp, "Initialisation.... \n" );
-	fprintf( res_fp, "INPUT \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
+	/*fprintf( res_fp, "INPUT \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
 	fprintf( res_fp, "INPUT \t PAPI_L2_TCA \t %lld \n", eventValues[1] );
 	fprintf( res_fp, "INPUT \t PAPI_L3_TCM \t %lld \n", eventValues[2] );
-<<<<<<< HEAD
-	fprintf( res_fp, "INPUT \t PAPI_L3_TCA \t %lld \n", eventValues[3] );
-	//fprintf( res_fp, "INPUT \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
-
-	// Cache miss rate calculations
-	float L2_cache_miss_rate, L3_cache_miss_rate;
-	L2_cache_miss_rate = ( (float) eventValues[0] / eventValues[1] ) * 100;
-	L3_cache_miss_rate = ( (float) eventValues[2] / eventValues[3] ) * 100;
-	fprintf( res_fp, "INPUT \t L2MissRate \t %f% \n", L2_cache_miss_rate );
-	fprintf( res_fp, "INPUT \t L3MissRate \t %f% \n", L3_cache_miss_rate );
-	//Resetting the event counters
-	PAPI_reset( EventSet );
-	//PAPI_reset( EventSet1 );
-=======
 	fprintf( res_fp, "INPUT \t PAPI_L3_TCA \t %lld \n", eventValues[3] );*/
 	fprintf( res_fp, "INPUT \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
 
@@ -254,7 +231,6 @@ int main(int argc, char *argv[])
 	//Resetting the event counters
 	//PAPI_reset( EventSet );
 	PAPI_reset( EventSet1 );
->>>>>>> flops
 	
 	fprintf ( res_fp, "Starting with the computation part \n" );
 	startusec = PAPI_get_real_usec();
@@ -380,30 +356,18 @@ int main(int argc, char *argv[])
 	endusec = PAPI_get_real_usec();
 
 	//Read the eventSet counters
-<<<<<<< HEAD
-	PAPI_stop( EventSet, eventValues );
-	//PAPI_stop( EventSet1, eventFpValue );
-=======
 	//PAPI_stop( EventSet, eventValues );
 	PAPI_stop( EventSet1, eventFpValue );
->>>>>>> flops
 
 	fprintf( res_fp, "Execution time in microseconds for the computation : %lld \n",endusec-startusec);
-	fprintf( res_fp, "CALC \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
+	/*fprintf( res_fp, "CALC \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
 	fprintf( res_fp, "CALC \t PAPI_L2_TCA \t %lld \n", eventValues[1] );
 	fprintf( res_fp, "CALC \t PAPI_L3_TCM \t %lld \n", eventValues[2] );
-	fprintf( res_fp, "CALC \t PAPI_L3_TCA \t %lld \n", eventValues[3] );
-	//fprintf( res_fp, "CALC \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
+	fprintf( res_fp, "CALC \t PAPI_L3_TCA \t %lld \n", eventValues[3] );*/
+	fprintf( res_fp, "CALC \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
 
-<<<<<<< HEAD
-	L2_cache_miss_rate = ( (float) eventValues[0] / eventValues[1] ) * 100;
-	L3_cache_miss_rate = ( (float) eventValues[2] / eventValues[3] ) * 100;
-	fprintf( res_fp, "CALC \t L2MissRate \t %f%\n", L2_cache_miss_rate );
-	fprintf( res_fp, "CALC \t L3MissRate \t %f%\n", L3_cache_miss_rate );
-=======
 	mflops = (float) eventFpValue[0] / (endusec-startusec);
 	fprintf( res_fp, "CALC \t MegaFlops \t %f \n", mflops );
->>>>>>> flops
 
 	/* write output file  */
 	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 )
