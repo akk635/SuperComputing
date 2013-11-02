@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	int retval;
 
 	//EventSet for L2 & L3 cache misses and accesses
-	int EventSet = PAPI_NULL;
+	// int EventSet = PAPI_NULL;
 	int EventSet1 = PAPI_NULL;
 
 	// Data pointer for getting the cpu info
@@ -51,8 +51,13 @@ int main(int argc, char *argv[])
 	printf( "Total CPUS in the entire system : %d \n",  hwinfo ->totalcpus );
 
 	/* Variables for reading counters of EventSet*/
+<<<<<<< HEAD
 	long long eventValues[ NUMEVENTS ] = {0};
 	//long long eventFpValue[ NUM_FPEVENTS ] = {0};
+=======
+	//long long eventValues[ NUMEVENTS ] = {0};
+	long long eventFpValue[ NUM_FPEVENTS ] = {0};
+>>>>>>> flops
 
 	char *format = argv[1];
 	char *file_in = argv[2];
@@ -87,9 +92,6 @@ int main(int argc, char *argv[])
 	// Parameters for measuring the time
 	long long startusec, endusec;
 
-	//Initializes the library again
-	//PAPI_flops(&real_time, &proc_time, &flpins, &mflops) ;
-
 	// Creating the eventSets
 	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK ) {
 		printf( "Problem in create eventset \n" );
@@ -115,15 +117,15 @@ int main(int argc, char *argv[])
 	}*/
 	printf( "Success in adding events \n" );
 
-	//Adding events to the eventset1
-	/*if (( PAPI_add_event(EventSet1[0], PAPI_TOT_INS) != PAPI_OK ) &&
-	   ( PAPI_add_event(EventSet1[1], PAPI_TOT_CYC) != PAPI_OK ) ){
-			exit(1);
-	}*/
 
 	// Start the eventset counters
+<<<<<<< HEAD
 	PAPI_start( EventSet );
 	//PAPI_start( EventSet1 );
+=======
+	// PAPI_start( EventSet );
+	PAPI_start( EventSet1 );
+>>>>>>> flops
 
 	startusec = PAPI_get_real_usec();
 
@@ -224,11 +226,12 @@ int main(int argc, char *argv[])
 	PAPI_read( EventSet, eventValues );
 	//PAPI_read( EventSet1, eventFpValue );
 
-	fprintf( res_fp, "Execution time in microseconds for the initialisation: %lld \n",endusec-startusec );
+	fprintf( res_fp, "Execution time in microseconds for the initialisation: %lld \n", endusec-startusec );
 	fprintf( res_fp, "Initialisation.... \n" );
 	fprintf( res_fp, "INPUT \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
 	fprintf( res_fp, "INPUT \t PAPI_L2_TCA \t %lld \n", eventValues[1] );
 	fprintf( res_fp, "INPUT \t PAPI_L3_TCM \t %lld \n", eventValues[2] );
+<<<<<<< HEAD
 	fprintf( res_fp, "INPUT \t PAPI_L3_TCA \t %lld \n", eventValues[3] );
 	//fprintf( res_fp, "INPUT \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
 
@@ -241,6 +244,17 @@ int main(int argc, char *argv[])
 	//Resetting the event counters
 	PAPI_reset( EventSet );
 	//PAPI_reset( EventSet1 );
+=======
+	fprintf( res_fp, "INPUT \t PAPI_L3_TCA \t %lld \n", eventValues[3] );*/
+	fprintf( res_fp, "INPUT \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
+
+	float mflops;
+	mflops = (float) eventFpValue[0] / (endusec-startusec);
+	fprintf( res_fp, "INPUT \t MegaFlops \t %f \n", mflops );
+	//Resetting the event counters
+	//PAPI_reset( EventSet );
+	PAPI_reset( EventSet1 );
+>>>>>>> flops
 	
 	fprintf ( res_fp, "Starting with the computation part \n" );
 	startusec = PAPI_get_real_usec();
@@ -366,8 +380,13 @@ int main(int argc, char *argv[])
 	endusec = PAPI_get_real_usec();
 
 	//Read the eventSet counters
+<<<<<<< HEAD
 	PAPI_stop( EventSet, eventValues );
 	//PAPI_stop( EventSet1, eventFpValue );
+=======
+	//PAPI_stop( EventSet, eventValues );
+	PAPI_stop( EventSet1, eventFpValue );
+>>>>>>> flops
 
 	fprintf( res_fp, "Execution time in microseconds for the computation : %lld \n",endusec-startusec);
 	fprintf( res_fp, "CALC \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
@@ -376,10 +395,15 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "CALC \t PAPI_L3_TCA \t %lld \n", eventValues[3] );
 	//fprintf( res_fp, "CALC \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
 
+<<<<<<< HEAD
 	L2_cache_miss_rate = ( (float) eventValues[0] / eventValues[1] ) * 100;
 	L3_cache_miss_rate = ( (float) eventValues[2] / eventValues[3] ) * 100;
 	fprintf( res_fp, "CALC \t L2MissRate \t %f%\n", L2_cache_miss_rate );
 	fprintf( res_fp, "CALC \t L3MissRate \t %f%\n", L3_cache_miss_rate );
+=======
+	mflops = (float) eventFpValue[0] / (endusec-startusec);
+	fprintf( res_fp, "CALC \t MegaFlops \t %f \n", mflops );
+>>>>>>> flops
 
 	/* write output file  */
 	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 )
