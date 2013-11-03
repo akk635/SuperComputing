@@ -71,7 +71,7 @@ int main( int argc, char *argv[] ){
 		fwrite( &buffer, sizeof(int), 1, binary_fp );
 	}
 
-	printf( "Wrote to the bin file" );
+	printf( "Wrote to the bin file \n" );
 	fclose( text_fp );
 	fclose( binary_fp );
 	return 0;
