@@ -7,7 +7,7 @@
 #include "xread.h"
 #include "xwrite.h"
 #include "binread.h"
-#define NUMEVENTS 4
+#define NUMEVENTS 3
 #define  NUM_FPEVENTS 1
 
 int main(int argc, char *argv[])
