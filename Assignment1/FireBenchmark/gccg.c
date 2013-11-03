@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Accessing the cpus per node, threads per core, memory, frequency */
-	printf( "No. of cpus in one node : %d \n", hwinfo ->ncpu );
+	printf( "No. of cpus in one numa node : %d \n", hwinfo ->ncpu );
 	printf( "Threads per core : %d \n", hwinfo ->threads );
 	printf( "No. of cores per socket : %d \n", hwinfo ->cores );
 	printf( "No. of sockets : %d \n", hwinfo ->sockets );
@@ -367,7 +367,7 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "CALC \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
 
 	mflops = (float) eventFpValue[0] / (endusec-startusec);
-	fprintf( res_fp, "CALC \t MegaFlops \t %f \n", mflops );
+	fprintf( res_fp, "CALC \t MegaFlops/sec \t %f \n", mflops );
 
 	/* write output file  */
 	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 )

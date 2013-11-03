@@ -26,3 +26,7 @@ gccg: $(OBJS)
 
 clean:
 	rm -rf *.o gccg 
+
+binconv:
+	$(CC) -c -o binconv.o  binconv.c -std=c99
+	$(CC) -o binconv binconv.o 
