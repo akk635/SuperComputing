@@ -82,6 +82,13 @@ int main(int argc, char *argv[])
 	/** red-black colouring of the cells*/
 	int *nboard;
 
+    /*the total number of points (after conversion to unstructured mesh topology)*/
+    int nodeCnt;
+    /* the array containing the coordinate of the points (after conversion to unstructured mesh topology) */
+    int **points;
+    /* the array containing the mesh elements (after conversion to unstructured mesh topology) */
+    int **elems;
+    
 	/** boundary coefficients for each volume cell */
 	double *bs, *be, *bn, *bw, *bl, *bh, *bp, *su;
 
@@ -370,8 +377,14 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "CALC \t MegaFlops/sec \t %f \n", mflops );
 
 	/* write output file  */
-	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 )
+	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 ){
 		printf("error when trying to write to file %s\n", file_out);
+    }else {
+        vol2mesh(nintci, nintcf, lcc, &nodeCnt, &points, &elems);
+        write_result_vtk( strcat( file_out, "SU.vtk" ), nintci, nintcf, nodeCnt, points, elems, su);
+        write_result_vtk( strcat( file_out, "CGUP.vtk" ), nintci, nintcf, nodeCnt, points, elems, cgup);
+        write_result_vtk( strcat( file_out, "VAR.vtk" ), nintci, nintcf, nodeCnt, points, elems, var);
+    }
 
 	/* Free all the dynamically allocated memory */
 	free(direc2); free(direc1); free(dxor2); free(dxor1); free(adxor2); free(adxor1);
