@@ -87,8 +87,12 @@ int main(int argc, char *argv[])
 	// Parameters for measuring the time
 	long long startusec, endusec;
 
-	//Initializes the library again
-	//PAPI_flops(&real_time, &proc_time, &flpins, &mflops) ;
+	/*the total number of points (after conversion to unstructured mesh topology)*/
+	int nodeCnt;
+	/* the array containing the coordinate of the points (after conversion to unstructured mesh topology) */
+    int **points;
+    /* the array containing the mesh elements (after conversion to unstructured mesh topology) */
+    int **elems;
 
 	// Creating the eventSets
 	if ( PAPI_create_eventset( &EventSet ) != PAPI_OK ) {
@@ -238,6 +242,7 @@ int main(int argc, char *argv[])
 	L3_cache_miss_rate = ( (float) eventValues[2] / eventValues[3] ) * 100;
 	fprintf( res_fp, "INPUT \t L2MissRate \t %f% \n", L2_cache_miss_rate );
 	fprintf( res_fp, "INPUT \t L3MissRate \t %f% \n", L3_cache_miss_rate );
+
 	//Resetting the event counters
 	PAPI_reset( EventSet );
 	//PAPI_reset( EventSet1 );
@@ -366,8 +371,8 @@ int main(int argc, char *argv[])
 	endusec = PAPI_get_real_usec();
 
 	//Read the eventSet counters
-	PAPI_stop( EventSet, eventValues );
-	//PAPI_stop( EventSet1, eventFpValue );
+	PAPI_read( EventSet, eventValues );
+	//PAPI_read( EventSet1, eventFpValue );
 
 	fprintf( res_fp, "Execution time in microseconds for the computation : %lld \n",endusec-startusec);
 	fprintf( res_fp, "CALC \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
@@ -381,9 +386,42 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "CALC \t L2MissRate \t %f%\n", L2_cache_miss_rate );
 	fprintf( res_fp, "CALC \t L3MissRate \t %f%\n", L3_cache_miss_rate );
 
+	//Resetting the event counters
+	PAPI_reset( EventSet );
+	//PAPI_reset( EventSet1 );
+
+	fprintf ( res_fp, "Starting with the output vtk part \n" );
+	startusec = PAPI_get_real_usec();
+
 	/* write output file  */
-	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 )
+	if ( write_result(file_in, file_out, nintci, nintcf, var, iter, ratio) != 0 ){
 		printf("error when trying to write to file %s\n", file_out);
+    }else {
+        vol2mesh(nintci, nintcf, lcc, &nodeCnt, &points, &elems);
+        write_result_vtk( strcat( file_out, "SU.vtk" ), nintci, nintcf, nodeCnt, points, elems, su);
+        write_result_vtk( strcat( file_out, "CGUP.vtk" ), nintci, nintcf, nodeCnt, points, elems, cgup);
+        write_result_vtk( strcat( file_out, "VAR.vtk" ), nintci, nintcf, nodeCnt, points, elems, var);
+    }
+
+	/* finished computation loop */
+	endusec = PAPI_get_real_usec();
+
+	//Read the eventSet counters
+	PAPI_stop( EventSet, eventValues );
+	//PAPI_stop( EventSet1, eventFpValue );
+
+	fprintf( res_fp, "Execution time in microseconds for the output vtk part : %lld \n",endusec-startusec);
+	fprintf( res_fp, "OUTPUT \t PAPI_L2_TCM \t %lld \n", eventValues[0] );
+	fprintf( res_fp, "OUTPUT \t PAPI_L2_TCA \t %lld \n", eventValues[1] );
+	fprintf( res_fp, "OUTPUT \t PAPI_L3_TCM \t %lld \n", eventValues[2] );
+	fprintf( res_fp, "OUTPUT \t PAPI_L3_TCA \t %lld \n", eventValues[3] );
+	//fprintf( res_fp, "CALC \t PAPI_FP_OPS \t %lld \n", eventFpValue[0] );
+
+	L2_cache_miss_rate = ( (float) eventValues[0] / eventValues[1] ) * 100;
+	L3_cache_miss_rate = ( (float) eventValues[2] / eventValues[3] ) * 100;
+	fprintf( res_fp, "OUTPUT \t L2MissRate \t %f%\n", L2_cache_miss_rate );
+	fprintf( res_fp, "OUTPUT \t L3MissRate \t %f%\n", L3_cache_miss_rate );
+
 
 	/* Free all the dynamically allocated memory */
 	free(direc2); free(direc1); free(dxor2); free(dxor1); free(adxor2); free(adxor1);
