@@ -9,7 +9,7 @@
 #include "binread.h"
 #include "vol2mesh.h"
 #define NUMEVENTS 4
-#define  NUM_FPEVENTS 1
+//#define  NUM_FPEVENTS 1
 #define OPTI "O1.csv"
 
 int main(int argc, char *argv[])
