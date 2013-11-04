@@ -7,8 +7,10 @@
 #include "xread.h"
 #include "xwrite.h"
 #include "binread.h"
+#include "vol2mesh.h"
 #define NUMEVENTS 4
 #define  NUM_FPEVENTS 1
+#define OPTI "O1.csv"
 
 int main(int argc, char *argv[])
 {
@@ -66,11 +68,16 @@ int main(int argc, char *argv[])
 	char * res_file = malloc( sizeof( char ) * 20 );
 	res_file = strcpy( res_file, file_out );
 	res_file = strcat( res_file, token );
-	free (cp);
+	free( cp );
+	free( token );
+	char *csv_file = malloc( sizeof(char) * 30 );
+	strcpy( csv_file, res_file );
 
-	FILE * res_fp = fopen( strcat( res_file, "_psdats.dat") , "w" );
+	FILE *csv_fp = fopen( strcat( csv_file, OPTI ), "w" );
+	FILE *res_fp = fopen( strcat( res_file, "_psdats.dat") , "w" );
 	int status = 0;
 	free( res_file );
+	free( csv_file );
 
 	/** internal cells start and end index*/
 	int nintci, nintcf;
@@ -108,6 +115,7 @@ int main(int argc, char *argv[])
 
 	int EventCode[ NUMEVENTS ] = {  PAPI_L2_TCM, PAPI_L2_TCA, PAPI_L3_TCM, PAPI_L3_TCA };
 	//int EventFpCode[ NUM_FPEVENTS ] = { PAPI_FP_OPS };
+
 	//Adding events to the eventset
 	if( PAPI_add_events( EventSet, EventCode, NUMEVENTS ) != PAPI_OK ){
 		printf( "Problem in adding events \n" );
@@ -118,12 +126,6 @@ int main(int argc, char *argv[])
 		exit( 1 );
 	}*/
 	printf( "Success in adding events \n" );
-
-	//Adding events to the eventset1
-	/*if (( PAPI_add_event(EventSet1[0], PAPI_TOT_INS) != PAPI_OK ) &&
-	   ( PAPI_add_event(EventSet1[1], PAPI_TOT_CYC) != PAPI_OK ) ){
-			exit(1);
-	}*/
 
 	// Start the eventset counters
 	PAPI_start( EventSet );
@@ -242,6 +244,11 @@ int main(int argc, char *argv[])
 	L3_cache_miss_rate = ( (float) eventValues[2] / eventValues[3] ) * 100;
 	fprintf( res_fp, "INPUT \t L2MissRate \t %f% \n", L2_cache_miss_rate );
 	fprintf( res_fp, "INPUT \t L3MissRate \t %f% \n", L3_cache_miss_rate );
+
+	fprintf( csv_fp, "Results for the INPUT phase \n" );
+   	fprintf( csv_fp, "%s, %lld, %lld, %lld, %lld, %f, %f \n", OPTI,
+   			eventValues[0], eventValues[1], eventValues[2], eventValues[3],
+   			L2_cache_miss_rate, L3_cache_miss_rate);
 
 	//Resetting the event counters
 	PAPI_reset( EventSet );
@@ -386,6 +393,11 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "CALC \t L2MissRate \t %f%\n", L2_cache_miss_rate );
 	fprintf( res_fp, "CALC \t L3MissRate \t %f%\n", L3_cache_miss_rate );
 
+	fprintf( csv_fp, "Results for the CALC phase \n" );
+   	fprintf( csv_fp, "%s, %lld, %lld, %lld, %lld, %f, %f \n", OPTI,
+   			eventValues[0], eventValues[1], eventValues[2], eventValues[3],
+   			L2_cache_miss_rate, L3_cache_miss_rate);
+
 	//Resetting the event counters
 	PAPI_reset( EventSet );
 	//PAPI_reset( EventSet1 );
@@ -422,6 +434,12 @@ int main(int argc, char *argv[])
 	fprintf( res_fp, "OUTPUT \t L2MissRate \t %f%\n", L2_cache_miss_rate );
 	fprintf( res_fp, "OUTPUT \t L3MissRate \t %f%\n", L3_cache_miss_rate );
 
+	fprintf( csv_fp, "Results for the OUTPUT phase \n" );
+   	fprintf( csv_fp, "%s, %lld, %lld, %lld, %lld, %f, %f \n", OPTI,
+   			eventValues[0], eventValues[1], eventValues[2], eventValues[3],
+   			L2_cache_miss_rate, L3_cache_miss_rate);
+
+
 
 	/* Free all the dynamically allocated memory */
 	free(direc2); free(direc1); free(dxor2); free(dxor1); free(adxor2); free(adxor1);
@@ -431,5 +449,6 @@ int main(int argc, char *argv[])
 	printf("Simulation completed successfully!\n");
 
 	fclose( res_fp );
+	fclose( csv_fp );
 	return EXIT_SUCCESS;
 }

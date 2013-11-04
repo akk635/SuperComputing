@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "vol2mesh.h"
 
 /**
  * @brief This function is used to convert the volume-based topology (of Fire input files) to unstructured mesh topology and geometry (for vtk format output).
