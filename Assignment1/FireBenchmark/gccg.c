@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
 	//EventSet for L2 & L3 cache misses and accesses
 	int EventSet = PAPI_NULL;
-	int EventSet1 = PAPI_NULL;
+	//int EventSet1 = PAPI_NULL;
 
 	// Data pointer for getting the cpu info
 	const PAPI_hw_info_t * hwinfo = NULL;
