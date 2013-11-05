@@ -9,7 +9,7 @@
 #include "binread.h"
 #include "vol2mesh.h"
 #define NUMEVENTS 4
-//#define  NUM_FPEVENTS 1
+#define  NUM_FPEVENTS 1
 #define OPTI "O1.csv"
 
 int main(int argc, char *argv[])
@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 
 	//EventSet for L2 & L3 cache misses and accesses
 	int EventSet = PAPI_NULL;
-	//int EventSet1 = PAPI_NULL;
+	int EventSet1 = PAPI_NULL;
 
 	// Data pointer for getting the cpu info
 	const PAPI_hw_info_t * hwinfo = NULL;
@@ -65,13 +65,13 @@ int main(int argc, char *argv[])
 	cp = strcpy( cp, file_in );
 	char *token = malloc( sizeof(char) * 10 );
 	token = strtok( cp, delim );
-	char * res_file = malloc( sizeof( char ) * 20 );
+	char * res_file = malloc( sizeof( char ) * 30 );
 	res_file = strcpy( res_file, file_out );
 	res_file = strcat( res_file, token );
 	free( cp );
 	free( token );
 	char *csv_file = malloc( sizeof(char) * 30 );
-	strcpy( csv_file, res_file );
+	csv_file = strcpy( csv_file, res_file );
 
 	FILE *csv_fp = fopen( strcat( csv_file, OPTI ), "w" );
 	FILE *res_fp = fopen( strcat( res_file, "_psdats.dat") , "w" );
@@ -402,6 +402,8 @@ int main(int argc, char *argv[])
 	PAPI_reset( EventSet );
 	//PAPI_reset( EventSet1 );
 
+	char *vtk_file = malloc( sizeof(char) * 30 );
+
 	fprintf ( res_fp, "Starting with the output vtk part \n" );
 	startusec = PAPI_get_real_usec();
 
@@ -410,10 +412,11 @@ int main(int argc, char *argv[])
 		printf("error when trying to write to file %s\n", file_out);
     }else {
         vol2mesh(nintci, nintcf, lcc, &nodeCnt, &points, &elems);
-        write_result_vtk( strcat( file_out, "SU.vtk" ), nintci, nintcf, nodeCnt, points, elems, su);
-        write_result_vtk( strcat( file_out, "CGUP.vtk" ), nintci, nintcf, nodeCnt, points, elems, cgup);
-        write_result_vtk( strcat( file_out, "VAR.vtk" ), nintci, nintcf, nodeCnt, points, elems, var);
+        write_result_vtk( strcat( strcpy( vtk_file,file_out ), "SU.vtk" ), nintci, nintcf, nodeCnt, points, elems, su);
+        write_result_vtk( strcat( strcpy( vtk_file,file_out ), "CGUP.vtk" ), nintci, nintcf, nodeCnt, points, elems, cgup);
+        write_result_vtk( strcat( strcpy( vtk_file,file_out ), "VAR.vtk" ), nintci, nintcf, nodeCnt, points, elems, var);
     }
+	free( vtk_file );
 
 	/* finished computation loop */
 	endusec = PAPI_get_real_usec();
