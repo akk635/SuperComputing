@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 	res_file = strcpy( res_file, file_out );
 	res_file = strcat( res_file, token );
 	free( cp );
-	free( token );
+	//free( token );
 	char *csv_file = malloc( sizeof(char) * 30 );
 	csv_file = strcpy( csv_file, res_file );
 
@@ -441,8 +441,6 @@ int main(int argc, char *argv[])
    	fprintf( csv_fp, "%s, %lld, %lld, %lld, %lld, %f, %f \n", OPTI,
    			eventValues[0], eventValues[1], eventValues[2], eventValues[3],
    			L2_cache_miss_rate, L3_cache_miss_rate);
-
-
 
 	/* Free all the dynamically allocated memory */
 	free(direc2); free(direc1); free(dxor2); free(dxor1); free(adxor2); free(adxor1);
