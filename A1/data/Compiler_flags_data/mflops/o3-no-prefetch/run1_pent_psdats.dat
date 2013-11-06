@@ -1,0 +1,12 @@
+Execution time in microseconds for the initialisation: 723023 
+Initialisation.... 
+INPUT 	 PAPI_FP_OPS 	 8842023 
+INPUT 	 MegaFlops 	 12.229241 
+Starting with the computation part 
+Execution time in microseconds for the computation : 1319711 
+CALC 	 PAPI_FP_OPS 	 1375087764 
+CALC 	 MegaFlops/sec 	 1041.961304 
+Starting with the VTK output part 
+Execution time in microseconds for the output vtk part : 1594702 
+OUTPUT 	 PAPI_FP_OPS 	 11765501 
+OUTPUT 	 MegaFlops/sec 	 7.377868 

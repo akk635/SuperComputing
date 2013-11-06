@@ -1,0 +1,24 @@
+Execution time in microseconds for the initialisation: 128610 
+Initialisation.... 
+INPUT 	 PAPI_L2_TCM 	 18706 
+INPUT 	 PAPI_L2_TCA 	 254142 
+INPUT 	 PAPI_L3_TCM 	 122 
+INPUT 	 PAPI_L3_TCA 	 18706 
+INPUT 	 L2MissRate 	 7.360452% 
+INPUT 	 L3MissRate 	 0.652197% 
+Starting with the computation part 
+Execution time in microseconds for the computation : 125793 
+CALC 	 PAPI_L2_TCM 	 951512 
+CALC 	 PAPI_L2_TCA 	 39612203 
+CALC 	 PAPI_L3_TCM 	 25 
+CALC 	 PAPI_L3_TCA 	 951512 
+CALC 	 L2MissRate 	 2.402068%
+CALC 	 L3MissRate 	 0.002627%
+Starting with the output vtk part 
+Execution time in microseconds for the output vtk part : 109391 
+OUTPUT 	 PAPI_L2_TCM 	 20279 
+OUTPUT 	 PAPI_L2_TCA 	 265722 
+OUTPUT 	 PAPI_L3_TCM 	 29 
+OUTPUT 	 PAPI_L3_TCA 	 20279 
+OUTPUT 	 L2MissRate 	 7.631660%
+OUTPUT 	 L3MissRate 	 0.143005%
