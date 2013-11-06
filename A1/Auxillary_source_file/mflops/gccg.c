@@ -362,18 +362,29 @@ int main( int argc, char *argv[] ) {
     startusec = PAPI_get_real_usec();
 
     char *vtk_file = malloc( sizeof(char) * 20 );
+
     /* write output file  */
-    if ( write_result( file_in, file_out, nintci, nintcf, var, iter, ratio ) != 0 ) {
+    vol2mesh( nintci, nintcf, lcc, &nodeCnt, &points, &elems );
+
+    if( write_result( file_in, file_out, nintci, nintcf, var, iter, ratio ) != 0 ) {
         printf( "error when trying to write to file %s\n", file_out );
-    } else {
-        vol2mesh( nintci, nintcf, lcc, &nodeCnt, &points, &elems );
-        write_result_vtk( strcat( strcpy( vtk_file, file_out ), "SU.vtk" ), nintci, nintcf, nodeCnt,
-                          points, elems, su );
-        write_result_vtk( strcat( strcpy( vtk_file, file_out ), "CGUP.vtk" ), nintci, nintcf,
-                          nodeCnt, points, elems, cgup );
-        write_result_vtk( strcat( strcpy( vtk_file, file_out ), "VAR.vtk" ), nintci, nintcf,
-                          nodeCnt, points, elems, var );
     }
+
+    if( write_result_vtk( strcat( strcpy( vtk_file, file_out ), "SU.vtk" ), nintci, nintcf, nodeCnt,
+                          points, elems, su ) != 0 ) {
+        printf( "error when trying to write to vtk file %s\n", "SU.vtk" );
+    }
+
+    if( write_result_vtk( strcat( strcpy( vtk_file, file_out ), "CGUP.vtk" ), nintci, nintcf,
+                          nodeCnt, points, elems, cgup ) != 0 ) {
+        printf( "error when trying to write to vtk file %s\n", "CGUP.vtk" );
+    }
+
+    if( write_result_vtk( strcat( strcpy( vtk_file, file_out ), "VAR.vtk" ), nintci, nintcf,
+                          nodeCnt, points, elems, var ) != 0 ) {
+        printf( "error when trying to write to vtk file %s\n", "VAR.vtk" );
+    }
+
     free( vtk_file );
 
     /* finished computation loop */
