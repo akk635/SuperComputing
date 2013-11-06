@@ -388,10 +388,6 @@ int main( int argc, char *argv[] ) {
     /* write output file  */
     vol2mesh( nintci, nintcf, lcc, &nodeCnt, &points, &elems );
 
-    if( write_result( file_in, file_out, nintci, nintcf, var, iter, ratio ) != 0 ) {
-        printf( "error when trying to write to file %s\n", file_out );
-    }
-
     if( write_result_vtk( strcat( strcpy( vtk_file, file_out ), "SU.vtk" ), nintci, nintcf, nodeCnt,
                           points, elems, su ) != 0 ) {
         printf( "error when trying to write to vtk file %s\n", "SU.vtk" );
