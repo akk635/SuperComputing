@@ -22,10 +22,10 @@ int main(int argc, char *argv[]) {
 
     /** Simulation parameters parsed from the input datasets */
     // Defined global indices for calculation purposes
-    int nintci, nintcf, g_nintci;    /// internal cells start and end index
+    int nintci, nintcf, gnintci;    /// internal cells start and end index
     /// external cells start and end index. The external cells are only ghost cells.
     /// They are accessed only through internal cells
-    int nextci, nextcf, g_nextci;
+    int nextci, nextcf, gnextci;
     int **lcc;    /// link cell-to-cell array - stores neighboring information
     /// Boundary coefficients for each volume cell (South, East, North, West, High, Low)
     double *bs, *be, *bn, *bw, *bh, *bl;
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
     /********** START INITIALIZATION **********/
     // read-in the input file
-    int init_status = initialization(file_in, part_type, &nintci, &nintcf, &g_nintci, &nextci, &nextcf, &g_nextci,
+    int init_status = initialization(file_in, part_type, &nintci, &nintcf, &gnintci, &nextci, &nextcf, &gnextci,
                                      &lcc, &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &points_count, &points,
                                      &elems, &var, &cgup, &oc, &cnorm, &local_global_index,
                                      &global_local_index, &neighbors_count, &send_count, &send_list,

@@ -10,8 +10,8 @@
 #include "util_read_files.h"
 #include "initialization.h"
 
-int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int* nextci,
-                   int* nextcf, int*** lcc, double** bs, double** be, double** bn, double** bw,
+int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int *gnintci, int* nextci,
+                   int* nextcf, int *gnextci, int*** lcc, double** bs, double** be, double** bn, double** bw,
                    double** bl, double** bh, double** bp, double** su, int* points_count,
                    int*** points, int** elems, double** var, double** cgup, double** oc,
                    double** cnorm, int** local_global_index, int** global_local_index,
@@ -22,7 +22,7 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
 
     // read-in the input file
     // possibly in parallel --> me
-    int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, &*nextci, &*nextcf, &*lcc, &*bs,
+    int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, gnintci, &*nextci, &*nextcf, gnextci, &*lcc, &*bs,
                                    &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su, &*points_count,
                                    &*points, &*elems, local_global_index);
 

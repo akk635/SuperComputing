@@ -30,7 +30,7 @@
  * @param elems
  * @return
  */
-int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int *NEXTCF, int ***LCC,
+int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *GNINTCI, int *NEXTCI, int *NEXTCF, int *GNEXTCI, int ***LCC,
                     double **BS, double **BE, double **BN, double **BW, double **BL, double **BH,
                     double **BP, double **SU, int* points_count, int*** points, int** elems, int **local_global_index ) {
     int i = 0;
@@ -56,7 +56,11 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
     fread(NEXTCF, sizeof(int), 1, fp);
 
     // Storing the global starting point for calculation purposes
-    int GNINTCI = *NINTCI;
+    *GNINTCI = *NINTCI;
+    *GNEXTCI = *NEXTCI;
+
+    // for didtributing the external cells to the aapropriate processors
+    int *ext_distr = calloc( ( *NEXTCF - *NEXTCI + 1 ), sizeof(int) );
 
     int tot_int_cells = *NINTCF - *NINTCI + 1;
     int tot_ext_cells = *NEXTCF - *NEXTCI + 1;
@@ -76,16 +80,16 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
         int cells_buffer[ nproc ][ 4 ];
 
         // For nproc determing the parameters explicitly
-        cells_buffer[ 0 ] = *NEXTCF;
-        cells_buffer[ nproc ][ 1 ] = cells_buffer[ nproc ][ 0 ] - local_ext_cells + 1 + step_decr( distr_ext_res );
-        cells_buffer[ nproc ][ 2 ] = *NINTCF;
-        cells_buffer[ nproc ][ 3 ] = cells_buffer[ nproc ][ 2 ] - local_int_cells + 1 + step_decr( distr_int_res );
-
+        cells_buffer[ nproc ][ 0 ] = *NINTCF;
+        cells_buffer[ nproc ][ 1 ] = cells_buffer[ nproc ][ 0 ] - local_int_cells + 1 + step_decr( distr_int_res );
+        cells_buffer[ nproc ][ 2 ] = *NEXTCF;
+        cells_buffer[ nproc ][ 3 ] = cells_buffer[ nproc ][ 2 ] - local_ext_cells + 1 + step_decr( distr_ext_res );
+        MPI_Send( cells_buffer[ nproc ], 4, MPI_INT, nproc-1, nproc-1, MPI_COMM_WORLD );
         for( int i = nproc - 1; i > 0; i-- ){
             cells_buffer[ i ][ 0 ] = cells_buffer[ i+1 ][ 1 ] - 1;
-            cells_buffer[ i ][ 1 ] = cells_buffer[ i ][ 0 ] - local_ext_cells + 1 + step_decr( distr_ext_res );
+            cells_buffer[ i ][ 1 ] = cells_buffer[ i ][ 0 ] - local_int_cells + 1 + step_decr( distr_int_res );
             cells_buffer[ i ][ 2 ] = cells_buffer[ i+1 ][ 3 ] - 1;
-            cells_buffer[ i ][ 3 ] = cells_buffer[ i ][ 2 ] - local_int_cells + 1 + step_decr( distr_int_res );
+            cells_buffer[ i ][ 3 ] = cells_buffer[ i ][ 2 ] - local_ext_cells + 1 + step_decr( distr_ext_res );
             // Distributing the buffer to the corresponding process
             /* MPI_Send (&buf,count,datatype,dest,tag,comm) */
             MPI_Send( cells_buffer[i], 4, MPI_INT, i, i, MPI_COMM_WORLD );
@@ -93,13 +97,24 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
         *NINTCF = *NINTCI + local_int_cells - 1;
         *NEXTCF = *NEXTCI + local_ext_cells - 1;
 
+        // Buffer to send to the file stream
+        int ext_buffer;
+        // Continuing the file reading and set the external cells
+        for( int i = 0; i < nproc; i++ ){
+            for( int j = cells_buffer[i][0]; j <= cells_buffer[i][1]; j++ ){
+                for( int k = 0; k <= 5; k++ ) {
+                    fread( &ext_buffer, )
+                }
+            }
+        }
+
     } else {
         /*MPI_Recv (&buf,count,datatype,source,tag,comm,&status)*/
         MPI_Recv( buffer, 4, MPI_INT, 0, my_rank, &status );
-        *NEXTCF = buffer[ 0 ];
-        *NEXTCI = buffer[ 1 ];
-        *NINTCF = buffer[ 2 ];
-        *NINTCI = buffer[ 3 ];
+        *NINTCF = buffer[ 0 ];
+        *NINTCI = buffer[ 1 ];
+        *NEXTCF = buffer[ 2 ];
+        *NEXTCI = buffer[ 3 ];
     }
 
     // allocating LCC
@@ -115,16 +130,20 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
         }
     }
 
-    // Adjusting the LCC so that it can access the correct address
-    *LCC = *LCC - *NINTCI;
-
-    // For accessing the global positions in the file --> me
-    // better to write a function based upon the residual --> me
-    *local_global_index[ 0 ] = *NINTCI;
-    fseek( fp, ( 4 + ( *NINTCI - GNINTCI ) * 6 ) * sizeof(int), SEEK_SET );
+    // Allocating memory for the mappings
+    *local_global_index = malloc( sizeof(int) * (*NINTCF - *NINTCI + 1 + *NEXTCF - *NEXTCI + 1 ) );
+    for( int i = 0; i < *NINTCF - *NINTCI + 1; i++) {
+        *local_global_index[ i ] = *NINTCI + i;
+    }
+    for( int i = 0; i < *NEXTCF - *NEXTCI + 1; i++){
+        *local_global_index[ *NINTCF - *NINTCI + 1 + i ] = *NEXTCI + i;
+    }l
+    // *global_local_index = malloc
+    // Just making an inverse of the above case
+    fseek( fp, sizeof(int) * ( ( *local_global_index[ 0 ] * 6 ) + 4 ) , SEEK_SET );
     // start reading LCC
     // Note that C array index starts from 0 while Fortran starts from 1!
-    for ( i = (*NINTCI); i <= *NINTCF; i++ ) {
+    for ( i = 0; i <= *NINTCF - *NINTCI ; i++ ) {
         fread(&(*LCC)[i][0], sizeof(int), 1, fp);
         fread(&(*LCC)[i][1], sizeof(int), 1, fp);
         fread(&(*LCC)[i][2], sizeof(int), 1, fp);
@@ -132,6 +151,8 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
         fread(&(*LCC)[i][4], sizeof(int), 1, fp);
         fread(&(*LCC)[i][5], sizeof(int), 1, fp);
     }
+
+    // Reading done
 
     // allocate other arrays
     if ( (*BS = (double *) malloc((*NEXTCF + 1) * sizeof(double))) == NULL ) {
