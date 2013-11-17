@@ -9,7 +9,7 @@
 
 int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index,
                       int **global_local_index, int nintci, int nintcf, int points_count,
-                      int **points, int *elems, int local_int_cells, double *cgup) {
+                      int **points, int *elems, int local_int_cells, double *cgup, int elemcount) {
     // Return an error if not implemented
     //Checking for the ranks of the elements
 
@@ -18,45 +18,66 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);    /// get current process id
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);    /// get number of processes
 
-/*    if (my_rank == 0){
-        int proc_local_size;
+    if (my_rank == 0){
+        int proc_loc_int_size = 0;
         int *temp_elems = NULL;
+        int proc_loc_tot_size;
+        int *temp_loc_glo_index = NULL;
+        double *temp_data_values;
 
         // Gather all the elems into one processor
-        int *global_elems = (int *) malloc((nintcf - nintci + 1) * 8 * sizeof(int));
-        // For global indexing
-        global_elems = global_elems - nintci * 8;
+        int *global_elems = (int *) malloc( ( nintcf - nintci + 1 ) * 8 * sizeof(int) );
+
+        // Gather all the data values into one processor
+        double *data_values = (double *) malloc((nintcf - nintci + 1) * sizeof(double));
+
+        for ( int i = 0; i < local_int_cells; i++ ){
+            for ( int j = 0; j < 8; j++ ){
+                global_elems[ ( local_global_index[ i ] - nintci ) * 8 + j ] = elems[ i * 8 + j];
+            }
+            data_values[ local_global_index[ i ] - nintci ] = cgup[i];
+        }
 
         for (int i = nproc - 1; i > 0; i--){
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            MPI_Recv( &proc_local_size, 1, MPI_INT, i, i, MPI_COMM_WORLD, &status );
-            temp_elems = (int *) malloc( proc_local_size * 8 * sizeof(int));
-            MPI_Recv( temp_elems, proc_local_size * 8, MPI_INT, i, i, MPI_COMM_WORLD, &status );
-            // Now I even need local_global_indices
+            MPI_Recv( &proc_loc_int_size, 1, MPI_INT, i, i, MPI_COMM_WORLD, &status );
+            temp_elems = (int *) malloc( proc_loc_int_size * 8 * sizeof(int));
+            MPI_Recv( temp_elems, proc_loc_int_size * 8, MPI_INT, i, i, MPI_COMM_WORLD, &status );
+
+            // Now where to place indices
+            MPI_Recv( &proc_loc_tot_size, 1, MPI_INT, i, i, MPI_COMM_WORLD, &status );
+            temp_loc_glo_index = (int *) malloc( proc_loc_tot_size * sizeof(int));
+            MPI_Recv( temp_loc_glo_index, proc_loc_tot_size, MPI_INT, i, i, MPI_COMM_WORLD, &status );
+
+            temp_data_values = (double *) malloc( proc_loc_int_size * sizeof(double));
+            MPI_Recv( temp_data_values, proc_loc_int_size, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status );
+
+            // Need calculation
+            for ( int i = 0; i < proc_loc_int_size; i++ ){
+                for ( int j = 0; j < 8; j++ ){
+                    global_elems[ temp_loc_glo_index[i] * 8 + j ] = temp_elems[ i * 8 + j ];
+                }
+                data_values[ temp_loc_glo_index[i] ] = temp_data_values[i];
+            }
         }
+
+      vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf, points_count, points, global_elems);
+      vtk_append_double(file_vtk_out, "CGUP", nintci, nintcf, data_values);
 
     } else {
         // MPI_Send (&buf,count,datatype,dest,tag,comm)
         MPI_Send( &local_int_cells, 1, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
+        MPI_Send( elems, local_int_cells * 8, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
+        MPI_Send( &elemcount, 1, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
+        MPI_Send( local_global_index, elemcount, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
+        MPI_Send( cgup, local_int_cells, MPI_DOUBLE, 0, my_rank, MPI_COMM_WORLD );
+    }
 
-    }*/
+/*    char file_out[100];
+    sprintf( file_out, "%d_%s",my_rank, file_vtk_out );*/
+/*    vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf, points_count, points, elems);
+    vtk_append_double(file_vtk_out, "CGUP", nintci, nintcf, cgup);*/
 
-
-/*    for ( int i = nintci; i <= nintcf; i++ ){
-        global_elems[i] = (int*) malloc ( 8 * sizeof(int));
-    }*/
-
-/*    for (int i = 0 ; i < local_int_cells; i++){
-        for (int j = 0; j < 8; j++){
-            global_elems[ local_global_index[i] ][ j ] = elems[ i * 8 + j ];
-        }
-    }*/
-    char file_out[100];
-    sprintf( file_out, "%d_%s",my_rank, file_vtk_out );
-
-    vtk_write_unstr_grid_header(file_in, file_out, nintci, nintcf, points_count, points, elems);
-    vtk_append_double(file_out, "RANK", nintci, nintcf, cgup);
-    return -1;
 }
 
 int test_communication(char *file_in, char *file_vtk_out, int *local_global_index,

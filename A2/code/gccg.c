@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
     int* elems;    /// definition of the cells using their nodes (points) - each cell has 8 points
 
     /** Mapping between local and remote cell indices */
+    // Can be optimized by removing indexes for the external cells
     int* local_global_index;    /// local to global index mapping
     int** global_local_index;    /// global to local index mapping
 
@@ -90,11 +91,11 @@ int main(int argc, char *argv[]) {
     }
 
     char file_vtk_out[100];
-    sprintf(file_vtk_out, "%s_rank.vtk", out_prefix );
+    sprintf(file_vtk_out, "%s_cgup.vtk", out_prefix );
 
     // Implement this function in test_functions.c and call it here
     test_distribution(file_in, file_vtk_out, local_global_index, global_local_index, nintci, nintcf, points_count, points, elems,
-                      local_int_cells, cgup);
+                      local_int_cells, cgup, elemcount);
 
 
     // Implement this function in test_functions.c and call it here

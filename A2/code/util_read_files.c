@@ -173,6 +173,8 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
             j++;
         }
      }
+    int check;
+    check = distr_buffer[*NEXTCF];
 
     assert( j == (*elemcount) );
     j = 0;
@@ -244,6 +246,11 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
     // read the other arrays
     int lcc_read_end = ( ( *NINTCF - *NINTCI + 1 ) * 6 + 4 ) * sizeof( int );
 
+    if (my_rank == check){
+        long int fpos = ftell(fp);
+        assert( fpos == lcc_read_end );
+    }
+
     for ( i = 0; i < (*local_int_cells); i++ ) {
         fseek( fp, lcc_read_end + ( (*local_global_index)[i] - *NINTCI ) * 8 * sizeof(double), SEEK_SET );
         fread(&((*BS)[i]), sizeof(double), 1, fp);
@@ -256,6 +263,13 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
         fread(&((*SU)[i]), sizeof(double), 1, fp);
     }
 
+    int coe_read_end = lcc_read_end + 8 * ( *NINTCF - *NINTCI + 1 ) * sizeof(double);
+
+    if (my_rank == check){
+        long int fpos = ftell(fp);
+        assert( fpos == coe_read_end );
+    }
+
     // read geometry i.e nodes
     // allocate elems
     if ( (*elems = (int*) malloc( (*local_int_cells) * 8 * sizeof(int))) == NULL ) {
@@ -263,15 +277,20 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
         return -1;
     }
 
-    int coe_read_end = lcc_read_end + 8 * ( *NINTCF - *NINTCI + 1 ) * sizeof(double);
-
     // read elems
-    for ( i = 0; i <= (*local_int_cells - 1) * 8; i++ ) {
-        fseek( fp, coe_read_end + ( (*local_global_index)[i] - *NINTCI ) * 8 * sizeof(int), SEEK_SET );
-        fread(&((*elems)[i]), sizeof(int), 1, fp);
+    for ( i = 0; i < (*local_int_cells) ; i++ ) {
+            fseek( fp, coe_read_end + ( (*local_global_index)[i] - *NINTCI ) * 8 * sizeof(int), SEEK_SET );
+        for (int j = 0; j < 8; j++){
+            fread(&((*elems)[( i * 8 ) + j]), sizeof(int), 1, fp);
+        }
     }
 
     int nodes_read_end = coe_read_end + 8 * ( *NINTCF - *NINTCI + 1 ) * sizeof(int);
+
+    if ( my_rank == check ){
+        long int fpos = ftell(fp);
+        assert( fpos == nodes_read_end );
+    }
 
     fseek( fp, nodes_read_end, SEEK_SET );
 
