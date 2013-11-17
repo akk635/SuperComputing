@@ -21,11 +21,10 @@ int main(int argc, char *argv[]) {
     const int max_iters = 10000;    /// maximum number of iteration to perform
 
     /** Simulation parameters parsed from the input datasets */
-    // Defined global indices for calculation purposes
-    int nintci, nintcf, gnintci;    /// internal cells start and end index
+    int nintci, nintcf;    /// internal cells start and end index
     /// external cells start and end index. The external cells are only ghost cells.
     /// They are accessed only through internal cells
-    int nextci, nextcf, gnextci;
+    int nextci, nextcf;
     int **lcc;    /// link cell-to-cell array - stores neighboring information
     /// Boundary coefficients for each volume cell (South, East, North, West, High, Low)
     double *bs, *be, *bn, *bw, *bh, *bl;
@@ -45,7 +44,7 @@ int main(int argc, char *argv[]) {
 
     /** Mapping between local and remote cell indices */
     int* local_global_index;    /// local to global index mapping
-    int* global_local_index;    /// global to local index mapping
+    int** global_local_index;    /// global to local index mapping
 
     /** Lists of cells required for the communication */
     int neighbors_count = 0;    /// total number of neighbors to communicate with
@@ -73,22 +72,30 @@ int main(int argc, char *argv[]) {
     char *out_prefix = argv[2];
     char *part_type = (argc == 3 ? "classical" : argv[3]);
 
+    // For local element counts in each processor
+    int elemcount = 0;
+    int local_int_cells = 0;
+
     /********** START INITIALIZATION **********/
     // read-in the input file
-    int init_status = initialization(file_in, part_type, &nintci, &nintcf, &gnintci, &nextci, &nextcf, &gnextci,
-                                     &lcc, &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &points_count, &points,
+    int init_status = initialization(file_in, part_type, &nintci, &nintcf, &nextci, &nextcf, &lcc,
+                                     &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &points_count, &points,
                                      &elems, &var, &cgup, &oc, &cnorm, &local_global_index,
                                      &global_local_index, &neighbors_count, &send_count, &send_list,
-                                     &recv_count, &recv_list, &epart, &npart, &objval);
+                                     &recv_count, &recv_list, &epart, &npart, &objval, &elemcount, &local_int_cells );
 
     if ( init_status != 0 ) {
         fprintf(stderr, "Failed to initialize data!\n");
         MPI_Abort(MPI_COMM_WORLD, my_rank);
     }
 
+    char file_vtk_out[100];
+    sprintf(file_vtk_out, "%s_rank.vtk", out_prefix );
+
     // Implement this function in test_functions.c and call it here
-    /* test_distribution(file_in, file_vtk_out, local_global_index, 
-     local_num_elems, cgup_local); */
+    test_distribution(file_in, file_vtk_out, local_global_index, global_local_index, nintci, nintcf, points_count, points, elems,
+                      local_int_cells, cgup);
+
 
     // Implement this function in test_functions.c and call it here
     /*test_communication(file_in, file_vtk_out, local_global_index, local_num_elems,
@@ -97,18 +104,18 @@ int main(int argc, char *argv[]) {
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
-    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
+/*    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
                                        be, bh, cnorm, var, su, cgup, &residual_ratio,
                                        local_global_index, global_local_index, neighbors_count,
-                                       send_count, send_list, recv_count, recv_list);
+                                       send_count, send_list, recv_count, recv_list);*/
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
-    finalization(file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
-                 points, elems, var, cgup, su);
+/*    finalization(file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
+                 points, elems, var, cgup, su);*/
     /********** END FINALIZATION **********/
 
-    free(cnorm);
+/*    free(cnorm);
     free(var);
     free(cgup);
     free(su);
@@ -129,7 +136,7 @@ int main(int argc, char *argv[]) {
     for ( i = 0; i < points_count; i++ ) {
         free(points[i]);
     }
-    free(points);
+    free(points);*/
 
     MPI_Finalize();    /// cleanup MPI
 

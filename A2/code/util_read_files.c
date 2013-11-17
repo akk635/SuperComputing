@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "util_read_files.h"
+#include <assert.h>
 
 /**
  * Parse an binary input data set and initialize simulation variables
@@ -30,18 +31,13 @@
  * @param elems
  * @return
  */
-int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *GNINTCI, int *NEXTCI, int *NEXTCF, int *GNEXTCI, int ***LCC,
-                    double **BS, double **BE, double **BN, double **BW, double **BL, double **BH,
-                    double **BP, double **SU, int* points_count, int*** points, int** elems, int **local_global_index ) {
+int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int *NEXTCF, int ***LCC,
+                    double **BS, double **BE, double **BN, double **BW, double **BL, double **BH, double **BP,
+                    double **SU, int* points_count, int*** points, int** elems, int **local_global_index,
+                    int *elemcount, int *local_int_cells, int ***global_local_index ) {
     int i = 0;
     int my_rank, nproc;
-    //  For receiving from the main process
-    int buffer[ 4 ];
     MPI_Status status;
-
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
-
     FILE *fp = fopen(file_name, "rb");
 
     if ( fp == NULL ) {
@@ -55,95 +51,274 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *GNINTCI, int
     fread(NEXTCI, sizeof(int), 1, fp);
     fread(NEXTCF, sizeof(int), 1, fp);
 
-    // Storing the global starting point for calculation purposes
-    *GNINTCI = *NINTCI;
-    *GNEXTCI = *NEXTCI;
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 
-    // for didtributing the external cells to the aapropriate processors
-    int *ext_distr = calloc( ( *NEXTCF - *NEXTCI + 1 ), sizeof(int) );
+    int tot_domain_cells = *NEXTCF - *NINTCI + 1;
 
-    int tot_int_cells = *NINTCF - *NINTCI + 1;
-    int tot_ext_cells = *NEXTCF - *NEXTCI + 1;
+    // For storing ranks according to the indices
+    int *distr_buffer = (int *) malloc( sizeof(int) * tot_domain_cells );
 
-    // Distributing the internal and external cells
-    int local_int_cells = tot_int_cells/nproc;
-    int local_ext_cells = tot_ext_cells/nproc;
-    int total_int_res = tot_int_cells % nproc;
-    int total_ext_res = tot_ext_cells % nproc;
+    if (my_rank == 0){
+        int fpcount;
+        fpcount = *NINTCI;
 
-    if( my_rank == 0 ){
-        // distributing residual
-        int distr_int_res = total_int_res;
-        int distr_ext_res = total_ext_res;
+        // So that we can call on explicit coordinates
+        distr_buffer = distr_buffer - *NINTCI;
 
-        // Buffer for sending to other parameters
-        int cells_buffer[ nproc ][ 4 ];
+        int local_cells_size;
 
-        // For nproc determing the parameters explicitly
-        cells_buffer[ nproc ][ 0 ] = *NINTCF;
-        cells_buffer[ nproc ][ 1 ] = cells_buffer[ nproc ][ 0 ] - local_int_cells + 1 + step_decr( distr_int_res );
-        cells_buffer[ nproc ][ 2 ] = *NEXTCF;
-        cells_buffer[ nproc ][ 3 ] = cells_buffer[ nproc ][ 2 ] - local_ext_cells + 1 + step_decr( distr_ext_res );
-        MPI_Send( cells_buffer[ nproc ], 4, MPI_INT, nproc-1, nproc-1, MPI_COMM_WORLD );
-        for( int i = nproc - 1; i > 0; i-- ){
-            cells_buffer[ i ][ 0 ] = cells_buffer[ i+1 ][ 1 ] - 1;
-            cells_buffer[ i ][ 1 ] = cells_buffer[ i ][ 0 ] - local_int_cells + 1 + step_decr( distr_int_res );
-            cells_buffer[ i ][ 2 ] = cells_buffer[ i+1 ][ 3 ] - 1;
-            cells_buffer[ i ][ 3 ] = cells_buffer[ i ][ 2 ] - local_ext_cells + 1 + step_decr( distr_ext_res );
-            // Distributing the buffer to the corresponding process
-            /* MPI_Send (&buf,count,datatype,dest,tag,comm) */
-            MPI_Send( cells_buffer[i], 4, MPI_INT, i, i, MPI_COMM_WORLD );
+        int normal_local_size = tot_domain_cells / nproc;
+        int res_cells =  tot_domain_cells % nproc;
+
+        // Initializing the distribution array with -1
+        for ( int i = *NINTCI; i < *NEXTCF + 1; i++){
+                distr_buffer[i] = -1;
         }
-        *NINTCF = *NINTCI + local_int_cells - 1;
-        *NEXTCF = *NEXTCI + local_ext_cells - 1;
 
-        // Buffer to send to the file stream
-        int ext_buffer;
-        // Continuing the file reading and set the external cells
-        for( int i = 0; i < nproc; i++ ){
-            for( int j = cells_buffer[i][0]; j <= cells_buffer[i][1]; j++ ){
-                for( int k = 0; k <= 5; k++ ) {
-                    fread( &ext_buffer, )
+        // All the neighbors do not cover all the cells.
+        // there are some external cells which are not neighbors of internal
+        int temp_cells_size = 0;
+
+        // To get the indices to write in the distr_buffer
+        int temp_buffer;
+
+        // equally distributing the local size for each processor
+        for( int i = nproc-1; i >= 0 ; i-- ){
+            *elemcount = 0;
+            local_cells_size = normal_local_size;
+            // Reading the topological info and then distributing according to the locality
+            if ( res_cells > 0 ){
+                res_cells--;
+                local_cells_size++;
+            }
+
+            while ((*elemcount) < local_cells_size) {
+
+                if( fpcount == *NINTCF + 1){
+                    break;
                 }
+
+                if( distr_buffer[ fpcount ] == -1){
+                    distr_buffer[ fpcount ] = i;
+                    (*elemcount)++;
+                    temp_cells_size++;
+                }
+
+                for ( int j = 0;j < 6; j++ ){
+                    fread( &temp_buffer, sizeof(int), 1, fp );
+                    if ( distr_buffer[ temp_buffer ] == -1){
+                        distr_buffer[ temp_buffer ] = i;
+                        (*elemcount)++;
+                        temp_cells_size++;
+                    }
+                }
+                fpcount++;
+            }
+
+            // Sending the internal cells indices to the respective processes
+            // MPI_Send (&buf,count,datatype,dest,tag,comm)
+            if( i != 0 ){
+                MPI_Send( elemcount, 1, MPI_INT, i, i, MPI_COMM_WORLD );
             }
         }
 
+        // Now distributing all the remaining external cells to process 0
+        for( int i = *NEXTCI; i <= *NEXTCF; i++){
+            if( distr_buffer[ i ] == -1){
+                distr_buffer[ i ] = 0;
+                (*elemcount)++;
+                temp_cells_size++;
+            }
+        }
+        assert( temp_cells_size == tot_domain_cells );
+        // Now distributing the buffer to all the processors
+        for( int i = 1; i < nproc; i++ ){
+            // MPI_Send (&buf,count,datatype,dest,tag,comm)
+            MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
+        }
     } else {
-        /*MPI_Recv (&buf,count,datatype,source,tag,comm,&status)*/
-        MPI_Recv( buffer, 4, MPI_INT, 0, my_rank, &status );
-        *NINTCF = buffer[ 0 ];
-        *NINTCI = buffer[ 1 ];
-        *NEXTCF = buffer[ 2 ];
-        *NEXTCI = buffer[ 3 ];
+        MPI_Recv( elemcount, 1, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
+        // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
+        MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
     }
 
-    // allocating LCC
-    if ( (*LCC = (int**) malloc((*NINTCF - *NINTCI + 1) * sizeof(int*))) == NULL ) {
-        fprintf(stderr, "malloc failed to allocate first dimension of LCC");
-        return -1;
+    if( my_rank != 0){
+        distr_buffer = distr_buffer - *NINTCI;
     }
 
-    for ( i = 0; i < *NINTCF - *NINTCI + 1; i++ ) {
+    (*global_local_index) = (int **) malloc( (*NEXTCF - *NINTCI + 1) * sizeof(int *) );
+    (*global_local_index) = (*global_local_index) - *NINTCI;
+
+    for( int i = *NINTCI; i <= *NEXTCF; i++ ){
+        (*global_local_index)[i] = (int *) calloc( 2,  sizeof(int));
+    }
+
+    *local_int_cells = 0;
+
+    for (int i = *NINTCI; i <= *NINTCF ; i++){
+        if( distr_buffer[i] == my_rank ){
+            (*local_int_cells)++;
+        }
+    }
+
+    *local_global_index =  malloc( (*elemcount) * sizeof(int));
+
+    int j = 0;
+    for (int i = *NINTCI; i <= *NEXTCF ; i++){
+        (*global_local_index)[i][0] = distr_buffer[i];
+        if( distr_buffer[i] == my_rank ){
+            (*local_global_index)[j] = i;
+            (*global_local_index)[i][1] = j;
+            j++;
+        }
+     }
+
+    assert( j == (*elemcount) );
+    j = 0;
+
+    // Allocating the LCC in individual processes
+    if ( (*LCC = (int**) malloc( (*local_int_cells) * sizeof(int*))) == NULL ) {
+            fprintf(stderr, "malloc failed to allocate first dimension of LCC");
+            return -1;
+    }
+
+    for ( i = 0; i < (*local_int_cells); i++ ) {
         if ( ((*LCC)[i] = (int *) malloc(6 * sizeof(int))) == NULL ) {
             fprintf(stderr, "malloc failed to allocate second dimension of LCC\n");
             return -1;
         }
     }
 
-    // Allocating memory for the mappings
-    *local_global_index = malloc( sizeof(int) * (*NINTCF - *NINTCI + 1 + *NEXTCF - *NEXTCI + 1 ) );
-    for( int i = 0; i < *NINTCF - *NINTCI + 1; i++) {
-        *local_global_index[ i ] = *NINTCI + i;
+    int index_read = 4 * sizeof(int);
+
+    // Start reading LCC
+    for (int i = 0; i < (*local_int_cells); i++){
+        fseek( fp, index_read + ( (*local_global_index)[i] - *NINTCI )* 6 * sizeof(int), SEEK_SET );
+        for ( int j = 0; j < 6; j++){
+            fread(&(*LCC)[i][j], sizeof(int), 1, fp);
+        }
     }
-    for( int i = 0; i < *NEXTCF - *NEXTCI + 1; i++){
-        *local_global_index[ *NINTCF - *NINTCI + 1 + i ] = *NEXTCI + i;
-    }l
-    // *global_local_index = malloc
-    // Just making an inverse of the above case
-    fseek( fp, sizeof(int) * ( ( *local_global_index[ 0 ] * 6 ) + 4 ) , SEEK_SET );
+
+    // allocate other arrays
+    if ( (*BS = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
+        fprintf(stderr, "malloc(BS) failed\n");
+        return -1;
+    }
+
+    if ( (*BE = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
+        fprintf(stderr, "malloc(BE) failed\n");
+        return -1;
+    }
+
+    if ( (*BN = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
+        fprintf(stderr, "malloc(BN) failed\n");
+        return -1;
+    }
+
+    if ( (*BW = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
+        fprintf(stderr, "malloc(BW) failed\n");
+        return -1;
+    }
+
+    if ( (*BL = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
+        fprintf(stderr, "malloc(BL) failed\n");
+        return -1;
+    }
+
+    if ( (*BH = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
+        fprintf(stderr, "malloc(BH) failed\n");
+        return -1;
+    }
+
+    if ( (*BP = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
+        fprintf(stderr, "malloc(BP) failed\n");
+        return -1;
+    }
+
+    if ( (*SU = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
+        fprintf(stderr, "malloc(SU) failed\n");
+        return -1;
+    }
+
+    // read the other arrays
+    int lcc_read_end = ( ( *NINTCF - *NINTCI + 1 ) * 6 + 4 ) * sizeof( int );
+
+    for ( i = 0; i < (*local_int_cells); i++ ) {
+        fseek( fp, lcc_read_end + ( (*local_global_index)[i] - *NINTCI ) * 8 * sizeof(double), SEEK_SET );
+        fread(&((*BS)[i]), sizeof(double), 1, fp);
+        fread(&((*BE)[i]), sizeof(double), 1, fp);
+        fread(&((*BN)[i]), sizeof(double), 1, fp);
+        fread(&((*BW)[i]), sizeof(double), 1, fp);
+        fread(&((*BL)[i]), sizeof(double), 1, fp);
+        fread(&((*BH)[i]), sizeof(double), 1, fp);
+        fread(&((*BP)[i]), sizeof(double), 1, fp);
+        fread(&((*SU)[i]), sizeof(double), 1, fp);
+    }
+
+    // read geometry i.e nodes
+    // allocate elems
+    if ( (*elems = (int*) malloc( (*local_int_cells) * 8 * sizeof(int))) == NULL ) {
+        fprintf(stderr, "malloc failed to allocate elems");
+        return -1;
+    }
+
+    int coe_read_end = lcc_read_end + 8 * ( *NINTCF - *NINTCI + 1 ) * sizeof(double);
+
+    // read elems
+    for ( i = 0; i <= (*local_int_cells - 1) * 8; i++ ) {
+        fseek( fp, coe_read_end + ( (*local_global_index)[i] - *NINTCI ) * 8 * sizeof(int), SEEK_SET );
+        fread(&((*elems)[i]), sizeof(int), 1, fp);
+    }
+
+    int nodes_read_end = coe_read_end + 8 * ( *NINTCF - *NINTCI + 1 ) * sizeof(int);
+
+    fseek( fp, nodes_read_end, SEEK_SET );
+
+    fread(points_count, sizeof(int), 1, fp);
+
+    if( my_rank == 0 ){
+        printf( "points count : %d \n", *points_count );
+    }
+
+    // allocate points vec
+    if ( (*points = (int **) calloc(*points_count, sizeof(int*))) == NULL ) {
+        fprintf(stderr, "malloc() POINTS 1st dim. failed\n");
+        return -1;
+    }
+
+    for ( i = 0; i < *points_count; i++ ) {
+        if ( ((*points)[i] = (int *) calloc(3, sizeof(int))) == NULL ) {
+            fprintf(stderr, "malloc() POINTS 2nd dim. failed\n");
+            return -1;
+        }
+    }
+
+    int coordIdx;
+    int pointIdx;
+    for ( pointIdx = 0; pointIdx < *points_count; pointIdx++ ) {
+        for ( coordIdx = 0; coordIdx < 3; coordIdx++ ) {
+            fread(&((*points)[pointIdx][coordIdx]), sizeof(int), 1, fp);
+        }
+    }
+
+
+/*    // allocating LCC
+    if ( (*LCC = (int**) malloc((*NINTCF + 1) * sizeof(int*))) == NULL ) {
+        fprintf(stderr, "malloc failed to allocate first dimension of LCC");
+        return -1;
+    }
+
+    for ( i = 0; i < *NINTCF + 1; i++ ) {
+        if ( ((*LCC)[i] = (int *) malloc(6 * sizeof(int))) == NULL ) {
+            fprintf(stderr, "malloc failed to allocate second dimension of LCC\n");
+            return -1;
+        }
+    }
+
     // start reading LCC
     // Note that C array index starts from 0 while Fortran starts from 1!
-    for ( i = 0; i <= *NINTCF - *NINTCI ; i++ ) {
+    for ( i = (*NINTCI); i <= *NINTCF; i++ ) {
         fread(&(*LCC)[i][0], sizeof(int), 1, fp);
         fread(&(*LCC)[i][1], sizeof(int), 1, fp);
         fread(&(*LCC)[i][2], sizeof(int), 1, fp);
@@ -152,7 +327,9 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *GNINTCI, int
         fread(&(*LCC)[i][5], sizeof(int), 1, fp);
     }
 
-    // Reading done
+    long int temp;
+    temp = ftell(fp);
+    printf( "fpos : %ld \n", temp);
 
     // allocate other arrays
     if ( (*BS = (double *) malloc((*NEXTCF + 1) * sizeof(double))) == NULL ) {
@@ -221,6 +398,8 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *GNINTCI, int
 
     fread(points_count, sizeof(int), 1, fp);
 
+    printf( "points_count : %d \n", points_count );
+
     // allocate points vec
     if ( (*points = (int **) calloc(*points_count, sizeof(int*))) == NULL ) {
         fprintf(stderr, "malloc() POINTS 1st dim. failed\n");
@@ -240,8 +419,7 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *GNINTCI, int
         for ( coordIdx = 0; coordIdx < 3; coordIdx++ ) {
             fread(&((*points)[pointIdx][coordIdx]), sizeof(int), 1, fp);
         }
-    }
-
+    }*/
     fclose(fp);
 
     return 0;

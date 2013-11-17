@@ -10,43 +10,43 @@
 #include "util_read_files.h"
 #include "initialization.h"
 
-int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int *gnintci, int* nextci,
-                   int* nextcf, int *gnextci, int*** lcc, double** bs, double** be, double** bn, double** bw,
+int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int* nextci,
+                   int* nextcf, int*** lcc, double** bs, double** be, double** bn, double** bw,
                    double** bl, double** bh, double** bp, double** su, int* points_count,
                    int*** points, int** elems, double** var, double** cgup, double** oc,
-                   double** cnorm, int** local_global_index, int** global_local_index,
+                   double** cnorm, int** local_global_index, int*** global_local_index,
                    int* neighbors_count, int** send_count, int*** send_list, int** recv_count,
-                   int*** recv_list, int** epart, int** npart, int* objval) {
+                   int*** recv_list, int** epart, int** npart, int* objval, int *elemcount, int *local_int_cells) {
     /********** START INITIALIZATION **********/
     int i = 0;
 
     // read-in the input file
-    // possibly in parallel --> me
-    int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, gnintci, &*nextci, &*nextcf, gnextci, &*lcc, &*bs,
+    int f_status = read_binary_geo(file_in, &*nintci, &*nintcf, &*nextci, &*nextcf, &*lcc, &*bs,
                                    &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su, &*points_count,
-                                   &*points, &*elems, local_global_index);
+                                   &*points, &*elems, &*local_global_index, elemcount, local_int_cells, global_local_index );
 
+    printf("status: %d \n", f_status);
 
     if ( f_status != 0 ) return f_status;
 
-    *var = (double*) calloc(sizeof(double), (*nextcf + 1));
-    *cgup = (double*) calloc(sizeof(double), (*nextcf + 1));
-    *cnorm = (double*) calloc(sizeof(double), (*nintcf + 1));
+    *var = (double*) calloc(sizeof(double), *elemcount);
+    *cgup = (double*) calloc(sizeof(double), *elemcount);
+    *cnorm = (double*) calloc(sizeof(double), *local_int_cells);
 
     // initialize the arrays
     for ( i = 0; i <= 10; i++ ) {
         (*cnorm)[i] = 1.0;
     }
 
-    for ( i = (*nintci); i <= (*nintcf); i++ ) {
+    for ( i = 0; i < *local_int_cells; i++ ) {
         (*var)[i] = 0.0;
     }
 
-    for ( i = (*nintci); i <= (*nintcf); i++ ) {
+    for ( i = 0; i < *local_int_cells; i++  ) {
         (*cgup)[i] = 1.0 / ((*bp)[i]);
     }
 
-    for ( i = (*nextci); i <= (*nextcf); i++ ) {
+    for ( i = *local_int_cells; i < *elemcount; i++ ) {
         (*var)[i] = 0.0;
         (*cgup)[i] = 0.0;
         (*bs)[i] = 0.0;

@@ -12,9 +12,9 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
                    int* nextcf, int*** lcc, double** bs, double** be, double** bn, double** bw,
                    double** bl, double** bh, double** bp, double** su, int* points_count,
                    int*** points, int** elems, double** var, double** cgup, double** oc,
-                   double** cnorm, int** local_global_index, int** global_local_index,
+                   double** cnorm, int** local_global_index, int*** global_local_index,
                    int* neighbors_count, int** send_count, int*** send_list, int** recv_count,
-                   int*** recv_list, int** epart, int** npart, int* objval);
+                   int*** recv_list, int** epart, int** npart, int* objval, int *elemcount, int *local_int_cells);
 
 #endif /* INITIALIZATION_H_ */
 
