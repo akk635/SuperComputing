@@ -174,7 +174,7 @@ int read_binary_geo(char *file_name, int *NINTCI, int *NINTCF, int *NEXTCI, int 
         }
      }
     int check;
-    check = distr_buffer[*NEXTCF];
+    check = distr_buffer[*NINTCF];
 
     assert( j == (*elemcount) );
     j = 0;
