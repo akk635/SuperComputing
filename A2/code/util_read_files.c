@@ -35,7 +35,8 @@
 int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, int *NEXTCI, int *NEXTCF, int ***LCC,
 		double **BS, double **BE, double **BN, double **BW, double **BL, double **BH, double **BP,
 		double **SU, int* points_count, int*** points, int** elems, int **local_global_index,
-		int *elemcount, int *local_int_cells, int ***global_local_index ) {
+		int *elemcount, int *local_int_cells, int ***global_local_index, int **epart, int **npart, int *objval ) {
+
 	int i = 0;
 	int my_rank, nproc;
 	MPI_Status status;
@@ -59,7 +60,8 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 
 
 	// For storing ranks according to the indices
-	int *distr_buffer = (int *) malloc( sizeof(int) * tot_domain_cells );
+	(*epart) = (int *) malloc( sizeof(int) * tot_domain_cells);
+    int *distr_buffer = (*epart);
 
 	if ( strcmp(part_type,"classical") || strcmp(part_type,"Classical") == 0){
 
@@ -147,16 +149,16 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
 		}
 
-	}
-	else {
-		if (my_rank == 0) {
+	} else {
+	    if (my_rank == 0) {
 			int lcc_read_end = ( ( *NINTCF - *NINTCI + 1 ) * 6 + 4 ) * sizeof( int );
 			int coe_read_end = lcc_read_end + 8 * ( *NINTCF - *NINTCI + 1 ) * sizeof(double);
+
 			fseek(fp, coe_read_end, SEEK_CUR );
 
 			// read geometry
 			// allocate elems
-			if ( (*elems = (int*) malloc((*NINTCF + 1) * 8 * sizeof(int))) == NULL ) {
+			if ( (*elems = (int*) malloc((*NINTCF - *NINTCI + 1) * 8 * sizeof(int))) == NULL ) {
 				fprintf(stderr, "malloc(elems) failed");
 				return -1;
 			}
@@ -165,6 +167,7 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			for ( i = (*NINTCI); i < (*NINTCF + 1) * 8; i++ ) {
 				fread(&((*elems)[i]), sizeof(int), 1, fp);
 			}
+
 			fread(points_count, sizeof(int), 1, fp);
 
 			printf( "points_count : %d \n", *points_count );
@@ -179,31 +182,38 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			idx_t nparts = nproc;
 			real_t *tpwgts = NULL;
 			idx_t options[METIS_NOPTIONS];
-			idx_t _objval;
-			idx_t *eprt;
-			idx_t *nprt;
+			idx_t temp_epart;
+			idx_t temp_npart;
 
 			METIS_SetDefaultOptions(options);
+
 			if ( (eptr = (idx_t *) malloc((ne+1) * sizeof(idx_t))) == NULL ) {
 				fprintf(stderr, "malloc(eptr) failed\n");
 				return -1;
 			}
+
 			if ( (eind = (idx_t *) malloc((ne * 8) * sizeof(idx_t))) == NULL ) {
 				fprintf(stderr, "malloc(eind) failed\n");
 				return -1;
 			}
 
-
-			for ( int i = 0 ; i < ne+1; i++ )
-				eptr[i] = i * 8;
-
-			for ( int i = 0; i < ne * 8; i++ )
-				eind[i] = (*elems)[i];
-
-			if ( ( (*epart) = (int *) malloc((ne) * sizeof(int))) == NULL ) {
-				fprintf(stderr, "malloc(epart) failed\n");
-				return -1;
+			for ( int i = 0 ; i < ne+1; i++ ){
+			    eptr[i] = i * 8;
 			}
+
+			for ( int i = 0; i < ne * 8; i++ ){
+			    eind[i] = (*elems)[i];
+			}
+
+            if ( ( temp_epart = (int *) malloc((ne) * sizeof(int))) == NULL ) {
+                fprintf(stderr, "malloc(epart) failed\n");
+                return -1;
+            }
+
+            if ( ( temp_npart = (int *) malloc((nn) * sizeof(int))) == NULL ) {
+                fprintf(stderr, "malloc(npart) failed\n");
+                return -1;
+            }
 
 			if ( ( (*npart) = (int *) malloc((nn) * sizeof(int))) == NULL ) {
 				fprintf(stderr, "malloc(npart) failed\n");
@@ -211,21 +221,49 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			}
 
 			if ( strcmp(part_type,"dual") || strcmp(part_type,"Dual") == 0 ) {
-				if (  METIS_PartMeshDual(&ne, &nn, eptr, eind, vwgt, vsize, &ncommon, &nparts, tpwgts, options, &_objval, (idx_t*) epart, (idx_t*) npart) != METIS_OK ) {
+				if (  METIS_PartMeshDual(&ne, &nn, eptr, eind, vwgt, vsize, &ncommon, &nparts, tpwgts, options, (idx_t *) objval,
+				                         temp_epart, temp_npart) != METIS_OK ) {
 					fprintf(stderr, "Partitioning of METIS DUAL FAILED!\n");
 					return -1;
 				}
 
 			} else if ( strcmp(part_type,"nodal") || strcmp(part_type,"Nodal") == 0 ) {
-				if ( METIS_PartMeshNodal(&ne, &nn, eptr, eind, vwgt, vsize, &nparts, tpwgts, options, &_objval, (idx_t*) epart, (idx_t*) npart) != METIS_OK ) {
+				if ( METIS_PartMeshNodal(&ne, &nn, eptr, eind, vwgt, vsize, &nparts, tpwgts, options, (idx_t *) objval,
+				                         temp_epart, temp_npart) != METIS_OK ) {
 					fprintf(stderr, "Partitioning of METIS NODAL FAILED!\n");
 					return -1;
 				}
 			}
 
+            // Initializing the distribution array with -1
+            for ( int i = 0; i < *NEXTCF - *NINTCI + 1; i++){
+                (*epart)[i] = -1;
+            }
+
+			for ( int i = 0; i < *NINTCF- *NINTCI + 1; i++ ){
+			    (*epart)[i] = temp_epart[i];
+			}
+			for( int i = 0; i < *points_count; i++ ){
+			    (*npart)[i] = temp_npart[i];
+			}
+
+			// Adjusting the position of the dsitr_array to the global position
+
+			free(temp_epart);
+			free(temp_npart);
 			free(eptr);
 			free(eind);
+
+			// Distributing the things to other processors
+			for ( int i = nproc-1; i > 0; i-- ){
+	            // MPI_Send (&buf,count,datatype,dest,tag,comm)
+	            MPI_Send( (*epart), tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
+			}
+		} else {
+            // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
+            MPI_Recv( (*epart), tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
 		}
+
 	}
 
 	if( my_rank != 0){

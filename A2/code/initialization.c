@@ -23,7 +23,8 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     // read-in the input file
     int f_status = read_binary_geo(file_in, part_type, &*nintci, &*nintcf, &*nextci, &*nextcf, &*lcc, &*bs,
                                    &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su, &*points_count,
-                                   &*points, &*elems, &*local_global_index, elemcount, local_int_cells, global_local_index );
+                                   &*points, &*elems, &*local_global_index, elemcount, local_int_cells,
+                                   global_local_index, epart, npart, objval );
 
     printf("status: %d \n", f_status);
 
