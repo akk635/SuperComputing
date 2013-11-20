@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "util_read_files.h"
 #include <assert.h>
 #include "metis.h"
@@ -182,8 +183,8 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			idx_t nparts = nproc;
 			real_t *tpwgts = NULL;
 			idx_t options[METIS_NOPTIONS];
-			idx_t temp_epart;
-			idx_t temp_npart;
+			idx_t *temp_epart;
+			idx_t *temp_npart;
 
 			METIS_SetDefaultOptions(options);
 
