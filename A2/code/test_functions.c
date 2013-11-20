@@ -21,7 +21,6 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     if (my_rank == 0){
         int proc_loc_int_size = 0;
         int *temp_elems = NULL;
-        int proc_loc_tot_size;
         int *temp_loc_glo_index = NULL;
         double *temp_data_values;
 
@@ -45,9 +44,8 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
             MPI_Recv( temp_elems, proc_loc_int_size * 8, MPI_INT, i, i, MPI_COMM_WORLD, &status );
 
             // Now where to place indices
-            MPI_Recv( &proc_loc_tot_size, 1, MPI_INT, i, i, MPI_COMM_WORLD, &status );
-            temp_loc_glo_index = (int *) malloc( proc_loc_tot_size * sizeof(int));
-            MPI_Recv( temp_loc_glo_index, proc_loc_tot_size, MPI_INT, i, i, MPI_COMM_WORLD, &status );
+            temp_loc_glo_index = (int *) malloc( proc_loc_int_size * sizeof(int));
+            MPI_Recv( temp_loc_glo_index, proc_loc_int_size, MPI_INT, i, i, MPI_COMM_WORLD, &status );
 
             temp_data_values = (double *) malloc( proc_loc_int_size * sizeof(double));
             MPI_Recv( temp_data_values, proc_loc_int_size, MPI_DOUBLE, i, i, MPI_COMM_WORLD, &status );
@@ -68,8 +66,7 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
         // MPI_Send (&buf,count,datatype,dest,tag,comm)
         MPI_Send( &local_int_cells, 1, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
         MPI_Send( elems, local_int_cells * 8, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
-        MPI_Send( &elemcount, 1, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
-        MPI_Send( local_global_index, elemcount, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
+        MPI_Send( local_global_index, local_int_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD );
         MPI_Send( cgup, local_int_cells, MPI_DOUBLE, 0, my_rank, MPI_COMM_WORLD );
     }
 

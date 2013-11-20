@@ -248,6 +248,8 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			}
 
 			// Adjusting the position of the dsitr_array to the global position
+			distr_buffer = distr_buffer - *NINTCI;
+			(*elemcount) = 0;
 
 			free(temp_epart);
 			free(temp_npart);
@@ -262,8 +264,8 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 		} else {
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
             MPI_Recv( (*epart), tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
+            (*elemcount) = 0;
 		}
-
 	}
 
 	if( my_rank != 0){
@@ -285,10 +287,11 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 		}
 	}
 
-	*local_global_index =  malloc( (*elemcount) * sizeof(int));
+	*local_global_index =  malloc( (*local_int_cells) * sizeof(int));
 
+	// Only filling the internal cells in the global_local_index
 	int j = 0;
-	for (int i = *NINTCI; i <= *NEXTCF ; i++){
+	for (int i = *NINTCI; i <= *NINTCF ; i++){
 		(*global_local_index)[i][0] = distr_buffer[i];
 		if( distr_buffer[i] == my_rank ){
 			(*local_global_index)[j] = i;
@@ -296,10 +299,11 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			j++;
 		}
 	}
+
 	int check;
 	check = distr_buffer[*NINTCF];
 
-	assert( j == (*elemcount) );
+	assert( j == (*local_int_cells) );
 	j = 0;
 
 	// Allocating the LCC in individual processes
@@ -317,13 +321,41 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 
 	int index_read = 4 * sizeof(int);
 
-	// Start reading LCC
-	for (int i = 0; i < (*local_int_cells); i++){
-		fseek( fp, index_read + ( (*local_global_index)[i] - *NINTCI )* 6 * sizeof(int), SEEK_SET );
-		for ( int j = 0; j < 6; j++){
-			fread(&(*LCC)[i][j], sizeof(int), 1, fp);
-		}
+	if( strcmp(part_type, "classical") == 0 ){
+	    // Start reading LCC
+	    for (int i = 0; i < (*local_int_cells); i++){
+	        fseek( fp, index_read + ( (*local_global_index)[i] - *NINTCI )* 6 * sizeof(int), SEEK_SET );
+	        for ( int j = 0; j < 6; j++){
+	            fread(&(*LCC)[i][j], sizeof(int), 1, fp);
+	        }
+	    }
+	} else {
+	    (*elemcount) = (*local_int_cells);
+        // Start reading LCC
+        for (int i = 0; i < (*local_int_cells); i++){
+            fseek( fp, index_read + ( (*local_global_index)[i] - *NINTCI )* 6 * sizeof(int), SEEK_SET );
+            for ( int j = 0; j < 6; j++){
+                fread(&(*LCC)[i][j], sizeof(int), 1, fp);
+                if( ( (*LCC)[i][j] > *NINTCF ) & ( distr_buffer[( ( *LCC )[i][j] )] == -1 ) ){
+                    distr_buffer[( ( *LCC )[i][j] )] = my_rank;
+                    (*elemcount)++;
+                }
+            }
+        }
 	}
+
+	j = (*local_int_cells);
+	// Now both metis and classical are at the same position
+    for (int i = *NEXTCI; i <= *NEXTCF ; i++){
+        (*global_local_index)[i][0] = distr_buffer[i];
+        if( distr_buffer[i] == my_rank ){
+            (*global_local_index)[i][1] = j;
+            j++;
+        }
+    }
+
+    assert( j == (*elemcount));
+    j = 0;
 
 	// allocate other arrays
 	if ( (*BS = (double *) malloc( (*elemcount) * sizeof(double))) == NULL ) {
