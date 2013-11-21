@@ -131,19 +131,20 @@ int main( int argc, char *argv[] ) {
     free( bs );
     free( elems );
 
-    /*for ( i = 0; i < nintcf + 1; i++ ) {
-     free(lcc[i]);
+    for ( int i = 0; i < local_int_cells; i++ ) {
+        free(lcc[i]);
      }
-     free(lcc);*/
 
     for ( i = 0; i < points_count; i++ ) {
         free( points[i] );
     }
+
     free( points );
     free( epart );
     free( npart );
     free( local_global_index );
-    for ( i = 0; i < nextcf - nintci + 1; i++ ) {
+
+    for ( int i = nintci; i <= nextcf; i++ ) {
         free( global_local_index[i] );
     }
 

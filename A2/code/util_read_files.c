@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "util_read_files.h"
 #include <assert.h>
+#include "util_read_files.h"
 #include "metis.h"
 
 /**
@@ -33,11 +33,12 @@
  * @param elems
  * @return
  */
-int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, int *NEXTCI, int *NEXTCF, int ***LCC,
-		double **BS, double **BE, double **BN, double **BW, double **BL, double **BH, double **BP,
-		double **SU, int* points_count, int*** points, int** elems, int **local_global_index,
-		int *elemcount, int *local_int_cells, int ***global_local_index, int **epart, int **npart, int *objval ) {
-
+int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
+                     int *NEXTCI, int *NEXTCF, int ***LCC, double **BS, double **BE,
+                     double **BN, double **BW, double **BL, double **BH, double **BP,
+                     double **SU, int* points_count, int*** points, int** elems,
+                     int **local_global_index, int *elemcount, int *local_int_cells,
+                     int ***global_local_index, int **epart, int **npart, int *objval ) {
     int i = 0;
     int my_rank, nproc;
     MPI_Status status;
@@ -64,7 +65,6 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
     int *distr_buffer = ( *epart );
 
     if ( strcmp( part_type, "classical" ) == 0 ) {
-
         if ( my_rank == 0 ) {
             int fpcount;
             fpcount = *NINTCI;
@@ -100,7 +100,6 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
                 }
 
                 while ( ( *elemcount ) < local_cells_size ) {
-
                     if ( fpcount == *NINTCF + 1 ) {
                         break;
                     }
@@ -326,7 +325,7 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
         // Start reading LCC
         for ( int i = 0; i < ( *local_int_cells ); i++ ) {
             fseek( fp, index_read + ( ( *local_global_index )[i] - *NINTCI ) * 6 * sizeof(int),
-                   SEEK_SET );
+            SEEK_SET );
             for ( int j = 0; j < 6; j++ ) {
                 fread( &( *LCC )[i][j], sizeof(int), 1, fp );
             }
@@ -336,7 +335,7 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
         // Start reading LCC
         for ( int i = 0; i < ( *local_int_cells ); i++ ) {
             fseek( fp, index_read + ( ( *local_global_index )[i] - *NINTCI ) * 6 * sizeof(int),
-                   SEEK_SET );
+            SEEK_SET );
             for ( int j = 0; j < 6; j++ ) {
                 fread( &( *LCC )[i][j], sizeof(int), 1, fp );
                 if ( ( ( *LCC )[i][j] > *NINTCF ) & ( distr_buffer[( ( *LCC )[i][j] )] == -1 ) ) {
@@ -411,7 +410,7 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 
     for ( i = 0; i < ( *local_int_cells ); i++ ) {
         fseek( fp, lcc_read_end + ( ( *local_global_index )[i] - *NINTCI ) * 8 * sizeof(double),
-               SEEK_SET );
+        SEEK_SET );
         fread( &( ( *BS )[i] ), sizeof(double), 1, fp );
         fread( &( ( *BE )[i] ), sizeof(double), 1, fp );
         fread( &( ( *BN )[i] ), sizeof(double), 1, fp );
@@ -439,7 +438,7 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
     // read elems
     for ( i = 0; i < ( *local_int_cells ); i++ ) {
         fseek( fp, coe_read_end + ( ( *local_global_index )[i] - *NINTCI ) * 8 * sizeof(int),
-               SEEK_SET );
+        SEEK_SET );
         for ( int j = 0; j < 8; j++ ) {
             fread( &( ( *elems )[( i * 8 ) + j] ), sizeof(int), 1, fp );
         }
@@ -477,9 +476,8 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
         }
     }
 
-	fclose(fp);
+    fclose( fp );
 
-	return 0;
+    return 0;
 }
-
 

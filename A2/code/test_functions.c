@@ -12,8 +12,7 @@ int test_distribution( char *file_in, char *file_vtk_out, int *local_global_inde
                        int **global_local_index, int nintci, int nintcf, int points_count,
                        int **points, int *elems, int local_int_cells, double *cgup, int elemcount,
                        int writing_proc ) {
-
-    //Checking for the ranks of the elements
+    // Checking for the ranks of the elements
 
     MPI_Status status;
     int my_rank, nproc;
