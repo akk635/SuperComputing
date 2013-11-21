@@ -75,6 +75,12 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     sprintf( file_out, "%d_%s",my_rank, file_vtk_out );*/
 /*    vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf, points_count, points, elems);
     vtk_append_double(file_vtk_out, "CGUP", nintci, nintcf, cgup);*/
+    free(global_elems);
+    free(data_values);
+    free(temp_elems);
+    free(temp_loc_glo_index);
+    free(temp_data_values);
+    
 return 0;
 }
 
