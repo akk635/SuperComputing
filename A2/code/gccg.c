@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
                  points, elems, var, cgup, su);*/
     /********** END FINALIZATION **********/
 
-/*    free(cnorm);
+    free(cnorm);
     free(var);
     free(cgup);
     free(su);
@@ -137,7 +137,21 @@ int main(int argc, char *argv[]) {
     for ( i = 0; i < points_count; i++ ) {
         free(points[i]);
     }
-    free(points);*/
+    free(points);
+    free(oc);
+    free(local_global_index);
+    free(global_local_index);
+    free(send_count);
+    free(send_list);
+    free(recv_count);
+    free(recv_list);
+    free(epart);
+    free(npart);
+    free(file_in);
+    free(out_prefix);
+    free(part_type);
+    
+    
 
     MPI_Finalize();    /// cleanup MPI
 

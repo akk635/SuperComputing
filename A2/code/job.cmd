@@ -15,19 +15,16 @@
 #@ error = job$(jobid).err
 #@ notification = always
 #@ notify_user = ga39kax@mytum.de
-
 #@ queue
-
+. /etc/profile
+. /etc/profile.d/modules.sh
 module load metis
-
 mpiexec -n 8 ./gccg  ../dataFiles/cojack.geo.bin cojack_classic_proc3
 mpiexec -n 8 ./gccg  ../dataFiles/drall.geo.bin drall_classic_proc3
 mpiexec -n 8 ./gccg  ../dataFiles/pent.geo.bin pent_classic_proc3
-
 mpiexec -n 8 ./gccg  ../dataFiles/cojack.geo.bin cojack_dual_proc3 dual
 mpiexec -n 8 ./gccg  ../dataFiles/drall.geo.bin drall_dual_proc3 dual
 mpiexec -n 8 ./gccg  ../dataFiles/pent.geo.bin pent_dual_proc3 dual
-
 mpiexec -n 8 ./gccg  ../dataFiles/cojack.geo.bin cojack_nodal_proc3 nodal
 mpiexec -n 8 ./gccg  ../dataFiles/drall.geo.bin drall_nodal_proc3 nodal
 mpiexec -n 8 ./gccg  ../dataFiles/pent.geo.bin pent_nodal_proc3 nodal
