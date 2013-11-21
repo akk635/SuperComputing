@@ -21,39 +21,41 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
     int i = 0;
 
     // read-in the input file
-    int f_status = read_binary_geo(file_in, part_type, &*nintci, &*nintcf, &*nextci, &*nextcf, &*lcc, &*bs,
-                                   &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su, &*points_count,
-                                   &*points, &*elems, &*local_global_index, elemcount, local_int_cells,
-                                   global_local_index, epart, npart, objval );
+    int f_status = read_binary_geo( file_in, part_type, &*nintci, &*nintcf, &*nextci, &*nextcf,
+                                    &*lcc, &*bs, &*be, &*bn, &*bw, &*bl, &*bh, &*bp, &*su,
+                                    &*points_count, &*points, &*elems, &*local_global_index,
+                                    elemcount, local_int_cells, global_local_index, epart, npart,
+                                    objval );
 
-    if ( f_status != 0 ) return f_status;
+    if ( f_status != 0 )
+        return f_status;
 
-    *var = (double*) calloc(sizeof(double), *elemcount);
-    *cgup = (double*) calloc(sizeof(double), *elemcount);
-    *cnorm = (double*) calloc(sizeof(double), *local_int_cells);
+    *var = (double*) calloc( sizeof(double), *elemcount );
+    *cgup = (double*) calloc( sizeof(double), *elemcount );
+    *cnorm = (double*) calloc( sizeof(double), *local_int_cells );
 
     // initialize the arrays
     for ( i = 0; i <= 10; i++ ) {
-        (*cnorm)[i] = 1.0;
+        ( *cnorm )[i] = 1.0;
     }
 
     for ( i = 0; i < *local_int_cells; i++ ) {
-        (*var)[i] = 0.0;
+        ( *var )[i] = 0.0;
     }
 
-    for ( i = 0; i < *local_int_cells; i++  ) {
-        (*cgup)[i] = 1.0 / ((*bp)[i]);
+    for ( i = 0; i < *local_int_cells; i++ ) {
+        ( *cgup )[i] = 1.0 / ( ( *bp )[i] );
     }
 
     for ( i = *local_int_cells; i < *elemcount; i++ ) {
-        (*var)[i] = 0.0;
-        (*cgup)[i] = 0.0;
-        (*bs)[i] = 0.0;
-        (*be)[i] = 0.0;
-        (*bn)[i] = 0.0;
-        (*bw)[i] = 0.0;
-        (*bh)[i] = 0.0;
-        (*bl)[i] = 0.0;
+        ( *var )[i] = 0.0;
+        ( *cgup )[i] = 0.0;
+        ( *bs )[i] = 0.0;
+        ( *be )[i] = 0.0;
+        ( *bn )[i] = 0.0;
+        ( *bw )[i] = 0.0;
+        ( *bh )[i] = 0.0;
+        ( *bl )[i] = 0.0;
     }
 
     return 0;

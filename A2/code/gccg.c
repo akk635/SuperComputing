@@ -15,7 +15,7 @@
 #include "finalization.h"
 #include "test_functions.h"
 
-int main(int argc, char *argv[]) {
+int main( int argc, char *argv[] ) {
     int my_rank, num_procs, i;
 
     const int max_iters = 10000;    /// maximum number of iteration to perform
@@ -60,18 +60,18 @@ int main(int argc, char *argv[]) {
     int* npart;     /// partition vector for the points (nodes) of the mesh
     int objval;    /// resulting edgecut of total communication volume (classical distrib->zeros)
 
-    MPI_Init(&argc, &argv);    /// Start MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);    /// get current process id
-    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);    /// get number of processes
+    MPI_Init( &argc, &argv );    /// Start MPI
+    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );    /// get current process id
+    MPI_Comm_size( MPI_COMM_WORLD, &num_procs );    /// get number of processes
 
     if ( argc < 3 ) {
-        fprintf(stderr, "Usage: ./gccg <input_file> <output_prefix> [<partition_type>]\n");
-        MPI_Abort(MPI_COMM_WORLD, -1);
+        fprintf( stderr, "Usage: ./gccg <input_file> <output_prefix> [<partition_type>]\n" );
+        MPI_Abort( MPI_COMM_WORLD, -1 );
     }
 
     char *file_in = argv[1];
     char *out_prefix = argv[2];
-    char *part_type = (argc == 3 ? "classical" : argv[3]);
+    char *part_type = ( argc == 3 ? "classical" : argv[3] );
 
     // For local element counts in each processor
     int elemcount = 0;
@@ -79,24 +79,24 @@ int main(int argc, char *argv[]) {
 
     /********** START INITIALIZATION **********/
     // read-in the input file
-    int init_status = initialization(file_in, part_type, &nintci, &nintcf, &nextci, &nextcf, &lcc,
-                                     &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &points_count, &points,
-                                     &elems, &var, &cgup, &oc, &cnorm, &local_global_index,
-                                     &global_local_index, &neighbors_count, &send_count, &send_list,
-                                     &recv_count, &recv_list, &epart, &npart, &objval, &elemcount, &local_int_cells );
+    int init_status = initialization( file_in, part_type, &nintci, &nintcf, &nextci, &nextcf, &lcc,
+                                      &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &points_count,
+                                      &points, &elems, &var, &cgup, &oc, &cnorm,
+                                      &local_global_index, &global_local_index, &neighbors_count,
+                                      &send_count, &send_list, &recv_count, &recv_list, &epart,
+                                      &npart, &objval, &elemcount, &local_int_cells );
 
     if ( init_status != 0 ) {
-        fprintf(stderr, "Failed to initialize data!\n");
-        MPI_Abort(MPI_COMM_WORLD, my_rank);
+        fprintf( stderr, "Failed to initialize data!\n" );
+        MPI_Abort( MPI_COMM_WORLD, my_rank );
     }
 
     char file_vtk_out[100];
-    sprintf(file_vtk_out, "%s_cgup.vtk", out_prefix );
+    sprintf( file_vtk_out, "%s_cgup.vtk", out_prefix );
 
     // Implement this function in test_functions.c and call it here
-    test_distribution(file_in, file_vtk_out, local_global_index, global_local_index, nintci, nintcf, points_count, points, elems,
-                      local_int_cells, cgup, elemcount);
-
+    test_distribution( file_in, file_vtk_out, local_global_index, global_local_index, nintci,
+                       nintcf, points_count, points, elems, local_int_cells, cgup, elemcount );
 
     // Implement this function in test_functions.c and call it here
     /*test_communication(file_in, file_vtk_out, local_global_index, local_num_elems,
@@ -105,39 +105,45 @@ int main(int argc, char *argv[]) {
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
-/*    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
-                                       be, bh, cnorm, var, su, cgup, &residual_ratio,
-                                       local_global_index, global_local_index, neighbors_count,
-                                       send_count, send_list, recv_count, recv_list);*/
+    /*    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
+     be, bh, cnorm, var, su, cgup, &residual_ratio,
+     local_global_index, global_local_index, neighbors_count,
+     send_count, send_list, recv_count, recv_list);*/
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
-/*    finalization(file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
-                 points, elems, var, cgup, su);*/
+    /*    finalization(file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
+     points, elems, var, cgup, su);*/
     /********** END FINALIZATION **********/
 
-    free(cnorm);
-    free(var);
-    free(cgup);
-    free(su);
-    free(bp);
-    free(bh);
-    free(bl);
-    free(bw);
-    free(bn);
-    free(be);
-    free(bs);
-    free(elems);
+    free( cnorm );
+    free( var );
+    free( cgup );
+    free( su );
+    free( bp );
+    free( bh );
+    free( bl );
+    free( bw );
+    free( bn );
+    free( be );
+    free( bs );
+    free( elems );
 
     /*for ( i = 0; i < nintcf + 1; i++ ) {
-        free(lcc[i]);
-    }
-    free(lcc);*/
+     free(lcc[i]);
+     }
+     free(lcc);*/
 
     for ( i = 0; i < points_count; i++ ) {
-        free(points[i]);
+        free( points[i] );
     }
-    free(points);
+    free( points );
+    free( epart );
+    free( npart );
+    free( local_global_index );
+    for ( i = 0; i < nextcf - nintci + 1; i++ ) {
+        free( global_local_index[i] );
+    }
 
     MPI_Finalize();    /// cleanup MPI
 
