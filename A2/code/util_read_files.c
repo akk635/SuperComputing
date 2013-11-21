@@ -63,7 +63,7 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 	(*epart) = (int *) malloc( sizeof(int) * tot_domain_cells);
     int *distr_buffer = (*epart);
 
-	if ( strcmp(part_type,"classical") || strcmp(part_type,"Classical") == 0){
+	if ( strcmp(part_type,"classical") == 0 ){
 
 		if (my_rank == 0){
 			int fpcount;
@@ -182,8 +182,8 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			idx_t nparts = nproc;
 			real_t *tpwgts = NULL;
 			idx_t options[METIS_NOPTIONS];
-			idx_t temp_epart;
-			idx_t temp_npart;
+			idx_t *temp_epart;
+			idx_t *temp_npart;
 
 			METIS_SetDefaultOptions(options);
 
@@ -205,12 +205,12 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			    eind[i] = (*elems)[i];
 			}
 
-            if ( ( temp_epart = (int *) malloc((ne) * sizeof(int))) == NULL ) {
+            if ( ( temp_epart = (idx_t *) malloc((ne) * sizeof(int))) == NULL ) {
                 fprintf(stderr, "malloc(epart) failed\n");
                 return -1;
             }
 
-            if ( ( temp_npart = (int *) malloc((nn) * sizeof(int))) == NULL ) {
+            if ( ( temp_npart = (idx_t *) malloc((nn) * sizeof(int))) == NULL ) {
                 fprintf(stderr, "malloc(npart) failed\n");
                 return -1;
             }
@@ -220,14 +220,14 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 				return -1;
 			}
 
-			if ( strcmp(part_type,"dual") || strcmp(part_type,"Dual") == 0 ) {
+			if ( strcmp(part_type,"dual") == 0 ) {
 				if (  METIS_PartMeshDual(&ne, &nn, eptr, eind, vwgt, vsize, &ncommon, &nparts, tpwgts, options, (idx_t *) objval,
 				                         temp_epart, temp_npart) != METIS_OK ) {
 					fprintf(stderr, "Partitioning of METIS DUAL FAILED!\n");
 					return -1;
 				}
 
-			} else if ( strcmp(part_type,"nodal") || strcmp(part_type,"Nodal") == 0 ) {
+			} else if ( strcmp(part_type,"nodal") == 0 ) {
 				if ( METIS_PartMeshNodal(&ne, &nn, eptr, eind, vwgt, vsize, &nparts, tpwgts, options, (idx_t *) objval,
 				                         temp_epart, temp_npart) != METIS_OK ) {
 					fprintf(stderr, "Partitioning of METIS NODAL FAILED!\n");
@@ -241,10 +241,10 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
             }
 
 			for ( int i = 0; i < *NINTCF- *NINTCI + 1; i++ ){
-			    (*epart)[i] = temp_epart[i];
+			    (*epart)[i] = (int)temp_epart[i];
 			}
 			for( int i = 0; i < *points_count; i++ ){
-			    (*npart)[i] = temp_npart[i];
+			    (*npart)[i] = (int)temp_npart[i];
 			}
 
 			// Adjusting the position of the dsitr_array to the global position
@@ -354,6 +354,7 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
         }
     }
 
+    printf( "failed: %d and %d \n", j, (*elemcount));
     assert( j == (*elemcount));
     j = 0;
 
@@ -475,6 +476,8 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			fread(&((*points)[pointIdx][coordIdx]), sizeof(int), 1, fp);
 		}
 	}
+
+	printf("I am here \n");
 
 
 	/*    // allocating LCC
