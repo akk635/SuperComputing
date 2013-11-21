@@ -6,9 +6,9 @@
 
 CC = mpicc
 CFLAGS = -Wall -g -O0 -std=c99
-LIBS = -lm -lmetis
-INCLUDE = /usr/local/metis/include 
-LIB_PATH = /usr/local/metis/lib
+LIBS = -lm -lmetis -lmpi
+METIS_INCLUDE = $(METIS_INC) 
+METIS_LIB_PATH = $(METIS_LIB)
 
 LIBPOS=libpos.a
 AR = ar
@@ -20,10 +20,10 @@ OBJS =  $(addsuffix .o, $(basename $(SRCS)))
 all: gccg 
 
 %.o: %.c $(DEPS)
-	$(CC) -c -I$(INCLUDE) -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS) $(METIS_INCLUDE)
 
 gccg: gccg.c $(LIBPOS)
-	$(CC) -o $@ $^ $(CFLAGS) -I$(INCLUDE) $(LIBS) $(METIS_INC) -L$(LIB_PATH) $(METIS_LIB)
+	$(CC) -o $@ $^ $(CFLAGS) $(METIS_INCLUDE) $(METIS_LIB_PATH) $(LIBS)
 
 $(LIBPOS) : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $+
