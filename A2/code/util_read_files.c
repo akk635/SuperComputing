@@ -155,7 +155,7 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			int lcc_read_end = ( ( *NINTCF - *NINTCI + 1 ) * 6 + 4 ) * sizeof( int );
 			int coe_read_end = lcc_read_end + 8 * ( *NINTCF - *NINTCI + 1 ) * sizeof(double);
 
-			fseek(fp, coe_read_end, SEEK_CUR );
+			fseek(fp, coe_read_end, SEEK_SET );
 
 			// read geometry
 			// allocate elems
@@ -206,12 +206,12 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			    eind[i] = (*elems)[i];
 			}
 
-            if ( ( temp_epart = (idx_t *) malloc((ne) * sizeof(int))) == NULL ) {
+            if ( ( temp_epart = (idx_t *) malloc((ne) * sizeof(idx_t))) == NULL ) {
                 fprintf(stderr, "malloc(epart) failed\n");
                 return -1;
             }
 
-            if ( ( temp_npart = (idx_t *) malloc((nn) * sizeof(int))) == NULL ) {
+            if ( ( temp_npart = (idx_t *) malloc((nn) * sizeof(idx_t))) == NULL ) {
                 fprintf(stderr, "malloc(npart) failed\n");
                 return -1;
             }
