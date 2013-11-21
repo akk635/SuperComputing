@@ -95,8 +95,10 @@ int main( int argc, char *argv[] ) {
     sprintf( file_vtk_out, "%s_cgup.vtk", out_prefix );
 
     // Implement this function in test_functions.c and call it here
+    int writing_proc = 3;
     test_distribution( file_in, file_vtk_out, local_global_index, global_local_index, nintci,
-                       nintcf, points_count, points, elems, local_int_cells, cgup, elemcount );
+                       nintcf, points_count, points, elems, local_int_cells, cgup, elemcount,
+                       writing_proc );
 
     // Implement this function in test_functions.c and call it here
     /*test_communication(file_in, file_vtk_out, local_global_index, local_num_elems,

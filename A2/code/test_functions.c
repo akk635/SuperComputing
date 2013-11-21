@@ -8,9 +8,10 @@
 #include <assert.h>
 #include <stdlib.h>
 
-int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index,
-                      int **global_local_index, int nintci, int nintcf, int points_count,
-                      int **points, int *elems, int local_int_cells, double *cgup, int elemcount) {
+int test_distribution( char *file_in, char *file_vtk_out, int *local_global_index,
+                       int **global_local_index, int nintci, int nintcf, int points_count,
+                       int **points, int *elems, int local_int_cells, double *cgup, int elemcount,
+                       int writing_proc ) {
 
     //Checking for the ranks of the elements
 
@@ -19,7 +20,7 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );    /// get current process id
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );    /// get number of processes
 
-    if ( my_rank == 3 ) {
+    if ( my_rank == writing_proc ) {
         int proc_loc_int_size = 0;
         int *temp_elems = NULL;
         int *temp_loc_glo_index = NULL;
@@ -39,7 +40,7 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
         }
 
         for ( int i = nproc - 1; i >= 0; i-- ) {
-            if ( i != 3 ) {
+            if ( i != writing_proc ) {
                 // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
                 MPI_Recv( &proc_loc_int_size, 1, MPI_INT, i, i, MPI_COMM_WORLD, &status );
                 temp_elems = (int *) malloc( proc_loc_int_size * 8 * sizeof(int) );
@@ -75,18 +76,19 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
         free( temp_data_values );
     } else {
         // MPI_Send (&buf,count,datatype,dest,tag,comm)
-        MPI_Send( &local_int_cells, 1, MPI_INT, 3, my_rank, MPI_COMM_WORLD );
-        MPI_Send( elems, local_int_cells * 8, MPI_INT, 3, my_rank, MPI_COMM_WORLD );
-        MPI_Send( local_global_index, local_int_cells, MPI_INT, 3, my_rank, MPI_COMM_WORLD );
-        MPI_Send( cgup, local_int_cells, MPI_DOUBLE, 3, my_rank, MPI_COMM_WORLD );
+        MPI_Send( &local_int_cells, 1, MPI_INT, writing_proc, my_rank, MPI_COMM_WORLD );
+        MPI_Send( elems, local_int_cells * 8, MPI_INT, writing_proc, my_rank, MPI_COMM_WORLD );
+        MPI_Send( local_global_index, local_int_cells, MPI_INT, writing_proc, my_rank,
+        MPI_COMM_WORLD );
+        MPI_Send( cgup, local_int_cells, MPI_DOUBLE, writing_proc, my_rank, MPI_COMM_WORLD );
     }
 
     return 0;
 }
 
-int test_communication(char *file_in, char *file_vtk_out, int *local_global_index,
-                       int local_num_elems, int neighbors_count, int* send_count, int** send_list,
-                       int* recv_count, int** recv_list) {
+int test_communication( char *file_in, char *file_vtk_out, int *local_global_index,
+                        int local_num_elems, int neighbors_count, int* send_count, int** send_list,
+                        int* recv_count, int** recv_list ) {
     // Return an error if not implemented
     return -1;
 }
