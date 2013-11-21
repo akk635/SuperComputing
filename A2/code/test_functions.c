@@ -6,6 +6,7 @@
  */
 #include "test_functions.h"
 #include <assert.h>
+#include <stdlib.h>
 
 int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index,
                       int **global_local_index, int nintci, int nintcf, int points_count,
@@ -74,7 +75,7 @@ int test_distribution(char *file_in, char *file_vtk_out, int *local_global_index
     sprintf( file_out, "%d_%s",my_rank, file_vtk_out );*/
 /*    vtk_write_unstr_grid_header(file_in, file_vtk_out, nintci, nintcf, points_count, points, elems);
     vtk_append_double(file_vtk_out, "CGUP", nintci, nintcf, cgup);*/
-
+return -1;
 }
 
 int test_communication(char *file_in, char *file_vtk_out, int *local_global_index,
