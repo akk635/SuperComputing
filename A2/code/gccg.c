@@ -129,29 +129,15 @@ int main(int argc, char *argv[]) {
     free(bs);
     free(elems);
 
-    for ( i = 0; i < nintcf + 1; i++ ) {
+    /*for ( i = 0; i < nintcf + 1; i++ ) {
         free(lcc[i]);
     }
-    free(lcc);
+    free(lcc);*/
 
     for ( i = 0; i < points_count; i++ ) {
         free(points[i]);
     }
     free(points);
-    free(oc);
-    free(local_global_index);
-    free(global_local_index);
-    free(send_count);
-    free(send_list);
-    free(recv_count);
-    free(recv_list);
-    free(epart);
-    free(npart);
-    free(file_in);
-    free(out_prefix);
-    free(part_type);
-    
-    
 
     MPI_Finalize();    /// cleanup MPI
 
