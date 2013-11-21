@@ -26,8 +26,6 @@ int initialization(char* file_in, char* part_type, int* nintci, int* nintcf, int
                                    &*points, &*elems, &*local_global_index, elemcount, local_int_cells,
                                    global_local_index, epart, npart, objval );
 
-    printf("status: %d \n", f_status);
-
     if ( f_status != 0 ) return f_status;
 
     *var = (double*) calloc(sizeof(double), *elemcount);

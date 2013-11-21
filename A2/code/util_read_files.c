@@ -171,7 +171,6 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 
 			fread(points_count, sizeof(int), 1, fp);
 
-			printf( "points_count : %d \n", *points_count );
 
 			idx_t ne = *NINTCF - *NINTCI + 1;
 			idx_t nn = *points_count;
@@ -355,7 +354,6 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
         }
     }
 
-    printf( "failed: %d and %d \n", j, (*elemcount));
     assert( j == (*elemcount));
     j = 0;
 
@@ -453,10 +451,6 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 
 	fread(points_count, sizeof(int), 1, fp);
 
-	if( my_rank == 0 ){
-		printf( "points count : %d \n", *points_count );
-	}
-
 	// allocate points vec
 	if ( (*points = (int **) calloc(*points_count, sizeof(int*))) == NULL ) {
 		fprintf(stderr, "malloc() POINTS 1st dim. failed\n");
@@ -477,8 +471,6 @@ int read_binary_geo(char *file_name, char* part_type, int *NINTCI, int *NINTCF, 
 			fread(&((*points)[pointIdx][coordIdx]), sizeof(int), 1, fp);
 		}
 	}
-
-	printf("I am here \n");
 
 
 	/*    // allocating LCC
