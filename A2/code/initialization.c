@@ -6,7 +6,7 @@
  */
 
 #include <stdlib.h>
-
+#include <stdio.h>
 #include "util_read_files.h"
 #include "initialization.h"
 

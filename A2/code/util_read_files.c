@@ -6,6 +6,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "util_read_files.h"
 #include <assert.h>
 #include "metis.h"
