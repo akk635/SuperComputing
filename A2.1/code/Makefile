@@ -22,10 +22,10 @@ OBJS =  $(addsuffix .o, $(basename $(SRCS)))
 all: gccg 
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS) $(METIS_INCLUDE) -I$(INCLUDE)
+	$(CC) -c -o $@ $< $(CFLAGS) $(METIS_INCLUDE) $(INCLUDE)
 
 gccg: gccg.c $(LIBPOS)
-	$(CC) -o $@ $^ $(CFLAGS) $(METIS_INCLUDE) -I$(INCLUDE) $(METIS_LIB_PATH) -L$(LIB_PATH) $(LIBS)
+	$(CC) -o $@ $^ $(CFLAGS) $(METIS_INCLUDE) $(INCLUDE) $(METIS_LIB_PATH) $(LIB_PATH) $(LIBS)
 
 $(LIBPOS) : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $+
