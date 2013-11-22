@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "mpi.h"
+#include <mpi.h>
 
 #include "initialization.h"
 #include "compute_solution.h"
@@ -141,7 +141,6 @@ int main( int argc, char *argv[] ) {
 
     free( points );
     free( epart );
-    free( npart );
     free( local_global_index );
 
     for ( int i = nintci; i <= nextcf; i++ ) {
