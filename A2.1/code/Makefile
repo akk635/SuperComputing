@@ -9,8 +9,6 @@ CFLAGS = -Wall -g -O0 -std=c99
 LIBS = -lm -lmetis -lmpi
 METIS_INCLUDE = $(METIS_INC) 
 METIS_LIB_PATH = $(METIS_LIB)
-INCLUDE = /usr/local/metis/include
-LIB_PATH = /usr/local/metis/lib
 
 LIBPOS=libpos.a
 AR = ar
@@ -25,7 +23,7 @@ all: gccg
 	$(CC) -c -o $@ $< $(CFLAGS) $(METIS_INCLUDE) $(INCLUDE)
 
 gccg: gccg.c $(LIBPOS)
-	$(CC) -o $@ $^ $(CFLAGS) $(METIS_INCLUDE) $(INCLUDE) $(METIS_LIB_PATH) $(LIB_PATH) $(LIBS)
+	$(CC) -o $@ $^ $(CFLAGS) $(METIS_INCLUDE) $(METIS_LIB_PATH) $(LIBS)
 
 $(LIBPOS) : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $+
