@@ -64,7 +64,58 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
     ( *epart ) = (int *) malloc( sizeof(int) * tot_domain_cells );
     int *distr_buffer = ( *epart );
 
-    if ( strcmp( part_type, "classical" ) == 0 ) {
+    if(strcmp( part_type, "classical" ) == 0 ){
+
+        if(my_rank == 0 ){
+            int fpcount;
+            fpcount = *NINTCI;
+
+            int local_cells_size;
+
+            int tot_int_domain_cells = *NINTCF - *NINTCI + 1;
+
+            int normal_local_size = tot_int_domain_cells / nproc;
+            int res_cells = tot_int_domain_cells % nproc;
+
+            // Initializing the distribution array with -1
+            for ( int i = *NINTCI; i < *NEXTCF + 1; i++ ) {
+                distr_buffer[i] = -1;
+            }
+
+            // All the neighbors do not cover all the cells.
+            // there are some external cells which are not neighbors of internal
+            int temp_cells_size = 0;
+            int offset = 0;
+
+            for( int i = 0; i < nproc; i++ ){
+                local_cells_size = normal_local_size;
+                if( res_cells > 0 ){
+                    local_cells_size++;
+                    res_cells--;
+                }
+                for ( int j = 0; j < local_cells_size; j++ ){
+                    distr_buffer[ offset + j ] = i;
+                    temp_cells_size++;
+                }
+                offset += local_cells_size;
+            }
+
+            // So that we can call on explicit coordinates
+            distr_buffer = distr_buffer - *NINTCI;
+
+            for ( int i = 1; i < nproc ; i++ ){
+                // MPI_Send (&buf,count,datatype,dest,tag,comm)
+                MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
+            }
+
+
+        } else {
+            // Ready for receiving
+            MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD,
+                      &status );
+        }
+
+    } else if ( strcmp( part_type, "myclassical" ) == 0 ) {
         if ( my_rank == 0 ) {
             int fpcount;
             fpcount = *NINTCI;
@@ -321,7 +372,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
 
     int index_read = 4 * sizeof(int);
 
-    if ( strcmp( part_type, "classical" ) == 0 ) {
+    if ( strcmp( part_type, "myclassical" ) == 0 ) {
         // Start reading LCC
         for ( int i = 0; i < ( *local_int_cells ); i++ ) {
             fseek( fp, index_read + ( ( *local_global_index )[i] - *NINTCI ) * 6 * sizeof(int),
@@ -347,7 +398,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
     }
 
     j = ( *local_int_cells );
-    // Now both metis and classical are at the same position
+    // Now both metis, classical and myclassical are at the same position
     for ( int i = *NEXTCI; i <= *NEXTCF; i++ ) {
         ( *global_local_index )[i][0] = distr_buffer[i];
         if ( distr_buffer[i] == my_rank ) {

@@ -60,7 +60,7 @@ int test_distribution( char *file_in, char *file_vtk_out, int *local_global_inde
                     for ( int j = 0; j < 8; j++ ) {
                         global_elems[temp_loc_glo_index[i] * 8 + j] = temp_elems[i * 8 + j];
                     }
-                    data_values[temp_loc_glo_index[i]] = temp_data_values[i];
+                    data_values[temp_loc_glo_index[i]] = 0;//temp_data_values[i];
                 }
             }
         }
