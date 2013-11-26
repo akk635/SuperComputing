@@ -67,8 +67,6 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
     if(strcmp( part_type, "classical" ) == 0 ){
 
         if(my_rank == 0 ){
-            int fpcount;
-            fpcount = *NINTCI;
 
             int local_cells_size;
 
