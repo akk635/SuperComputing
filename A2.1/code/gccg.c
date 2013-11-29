@@ -109,7 +109,7 @@ int main( int argc, char *argv[] ) {
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
-    /*    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
+/*        int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
      be, bh, cnorm, var, su, cgup, &residual_ratio,
      local_global_index, global_local_index, neighbors_count,
      send_count, send_list, recv_count, recv_list);*/

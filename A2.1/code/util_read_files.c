@@ -98,20 +98,17 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
                 offset += local_cells_size;
             }
 
-            // So that we can call on explicit coordinates
-            distr_buffer = distr_buffer - *NINTCI;
-
-            for ( int i = 1; i < nproc ; i++ ){
+            /*for ( int i = 1; i < nproc ; i++ ){
                 // MPI_Send (&buf,count,datatype,dest,tag,comm)
                 MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
-            }
+            }*/
 
 
-        } else {
+        } /*else {
             // Ready for receiving
             MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD,
                       &status );
-        }
+        }*/
 
     } else if ( strcmp( part_type, "myclassical" ) == 0 ) {
         if ( my_rank == 0 ) {
@@ -187,15 +184,15 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             }
             assert( temp_cells_size == tot_domain_cells );
             // Now distributing the buffer to all the processors
-            for ( int i = 1; i < nproc; i++ ) {
+            /*for ( int i = 1; i < nproc; i++ ) {
                 // MPI_Send (&buf,count,datatype,dest,tag,comm)
                 MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
-            }
+            }*/
         } else {
             MPI_Recv( elemcount, 1, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD,
-                      &status );
+            /*MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD,
+                      &status );*/
         }
 
     } else {
@@ -306,20 +303,23 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             free( eind );
 
             // Distributing the things to other processors
-            for ( int i = nproc - 1; i > 0; i-- ) {
+            /*for ( int i = nproc - 1; i > 0; i-- ) {
                 // MPI_Send (&buf,count,datatype,dest,tag,comm)
                 MPI_Send( ( *epart ), tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
-            }
-        } else {
+            }*/
+        }/* else {
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
             MPI_Recv( ( *epart ), tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
             ( *elemcount ) = 0;
-        }
+        }*/
     }
 
-    if ( my_rank != 0 ) {
-        distr_buffer = distr_buffer - *NINTCI;
-    }
+    // int MPI_Bcast ( void *buffer, int count, MPI_Datatype datatype, int root,
+    //               MPI_Comm comm )
+    MPI_Bcast ( (void *)( *epart ),  tot_domain_cells, MPI_INT, 0, MPI_COMM_WORLD );
+
+    // For explicit global indexing
+    distr_buffer = distr_buffer - *NINTCI;
 
     ( *global_local_index ) = (int **) malloc( ( *NEXTCF - *NINTCI + 1 ) * sizeof(int *) );
     ( *global_local_index ) = ( *global_local_index ) - *NINTCI;
