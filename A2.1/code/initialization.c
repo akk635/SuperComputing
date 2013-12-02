@@ -88,6 +88,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     }
 
     ( *recv_list ) = malloc( nproc * sizeof(int *) );
+
     // Allocating the max array size
     for ( int i = 0; i < nproc; i++ ) {
         ( **recv_list ) = calloc( neighbors[i], sizeof(int) );
