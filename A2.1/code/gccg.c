@@ -98,9 +98,9 @@ int main( int argc, char *argv[] ) {
 
     // Implement this function in test_functions.c and call it here
     int writing_proc = 3;
-/*    test_distribution( file_in, file_vtk_out, local_global_index, global_local_index, nintci,
+    test_distribution( file_in, file_vtk_out, local_global_index, global_local_index, nintci,
                        nintcf, points_count, points, elems, local_int_cells, cgup, elemcount,
-                       writing_proc, send_count, send_list, recv_count, recv_list );*/
+                       writing_proc, send_count, send_list, recv_count, recv_list );
 
     // Implement this function in test_functions.c and call it here
 /*    test_communication(file_in, file_vtk_out, local_global_index, local_num_elems,

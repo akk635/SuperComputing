@@ -47,6 +47,13 @@ int test_distribution( char *file_in, char *file_vtk_out, int *local_global_inde
             }
         }
 
+        // Now updating the send list
+        for ( int i = 0; i < nproc; i++ ) {
+            for ( int j = 0; j < ( recv_count[i] ); j++ ) {
+                data_values[recv_list[i][j] - nintci] = 5;
+            }
+        }
+
         for ( int i = nproc - 1; i >= 0; i-- ) {
             if ( i != writing_proc ) {
                 // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)

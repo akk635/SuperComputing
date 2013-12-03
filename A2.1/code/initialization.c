@@ -81,17 +81,17 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     *recv_count = calloc( nproc, sizeof(int) );
     *send_count = calloc( nproc, sizeof(int) );
 
-    ( *send_list ) = malloc( nproc * sizeof(int *) );
+    ( *send_list ) = (int **)malloc( nproc * sizeof(int *) );
     // Allocating with the max array size
     for ( int i = 0; i < nproc; i++ ) {
-        ( **send_list ) = calloc( neighbors[i], sizeof(int) );
+        ( *send_list )[i] = (int *)calloc( neighbors[i], sizeof(int) );
     }
 
-    ( *recv_list ) = malloc( nproc * sizeof(int *) );
+    ( *recv_list ) = (int **) malloc( nproc * sizeof(int *) );
 
     // Allocating the max array size
     for ( int i = 0; i < nproc; i++ ) {
-        ( **recv_list ) = calloc( neighbors[i], sizeof(int) );
+        ( *recv_list )[i] = (int *)calloc( neighbors[i], sizeof(int) );
     }
 
     for ( int i = 0; i < ( *local_int_cells ); i++ ) {
