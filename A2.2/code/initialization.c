@@ -7,9 +7,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 #include "util_read_files.h"
 #include "initialization.h"
-#include <assert.h>
 
 int contains( int index, int *search_array, int size );
 
