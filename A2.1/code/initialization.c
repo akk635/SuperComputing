@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include "util_read_files.h"
 #include "initialization.h"
+#include <assert.h>
 
 int contains( int index, int *search_array, int size );
 
@@ -77,21 +78,25 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         }
     }
 
+    assert( neighbors[my_rank] == 0 );
+
     // For the actual count
     *recv_count = calloc( nproc, sizeof(int) );
     *send_count = calloc( nproc, sizeof(int) );
 
-    ( *send_list ) = (int **)malloc( nproc * sizeof(int *) );
+    ( *send_list ) = (int **) malloc( nproc * sizeof(int *) );
     // Allocating with the max array size
     for ( int i = 0; i < nproc; i++ ) {
-        ( *send_list )[i] = (int *)calloc( neighbors[i], sizeof(int) );
+        ( *send_list )[i] = (int *) calloc( neighbors[i], sizeof(int) );
     }
+
+    printf( "size 0 repr : %d \n", sizeof( ( *send_list )[my_rank] ) );
 
     ( *recv_list ) = (int **) malloc( nproc * sizeof(int *) );
 
     // Allocating the max array size
     for ( int i = 0; i < nproc; i++ ) {
-        ( *recv_list )[i] = (int *)calloc( neighbors[i], sizeof(int) );
+        ( *recv_list )[i] = (int *) calloc( neighbors[i], sizeof(int) );
     }
 
     for ( int i = 0; i < ( *local_int_cells ); i++ ) {
@@ -102,15 +107,18 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
                                 ( *recv_count )[temp_rank] ) ) {
                     // Adding the unique global indices
                     ( *recv_list )[temp_rank][( ( *recv_count )[temp_rank] )++] = ( *lcc )[i][j];
-                    if ( !contains( i, ( *send_list )[temp_rank], ( *send_count )[temp_rank] ) ) {
-                        // Adding the global indices to be sent to each processor
-                        ( *send_list )[temp_rank][( ( *send_count )[temp_rank] )++] = i;
-                    }
+                }
+
+                if ( !contains( i, ( *send_list )[temp_rank], ( *send_count )[temp_rank] ) ) {
+                    // Adding the global indices to be sent to each processor
+                    ( *send_list )[temp_rank][( ( *send_count )[temp_rank] )++] = i;
                 }
             }
         }
     }
 
+    assert( ( *recv_count )[my_rank] == 0 );
+    assert( ( *send_count )[my_rank] == 0 );
     // Now the ghost cells have to be allocated based on the recv counts
 
     return 0;

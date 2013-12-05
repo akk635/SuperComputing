@@ -30,7 +30,7 @@ int test_distribution( char *file_in, char *file_vtk_out, int *local_global_inde
         int *global_elems = (int *) malloc( ( nintcf - nintci + 1 ) * 8 * sizeof(int) );
 
         // Gather all the data values into one processor
-        double *data_values = (double *) calloc( ( nintcf - nintci + 1 ), sizeof(double) );
+        int *data_values = (double *) calloc( ( nintcf - nintci + 1 ), sizeof(int) );
 
         for ( int i = 0; i < local_int_cells; i++ ) {
             for ( int j = 0; j < 8; j++ ) {
@@ -47,7 +47,7 @@ int test_distribution( char *file_in, char *file_vtk_out, int *local_global_inde
             }
         }
 
-        // Now updating the send list
+        // Now updating the recv list
         for ( int i = 0; i < nproc; i++ ) {
             for ( int j = 0; j < ( recv_count[i] ); j++ ) {
                 data_values[recv_list[i][j] - nintci] = 5;
@@ -76,7 +76,8 @@ int test_distribution( char *file_in, char *file_vtk_out, int *local_global_inde
                 // Need calculation
                 for ( int i = 0; i < proc_loc_int_size; i++ ) {
                     for ( int j = 0; j < 8; j++ ) {
-                        global_elems[temp_loc_glo_index[i] * 8 + j] = temp_elems[i * 8 + j];
+                        global_elems[( temp_loc_glo_index[i] - nintci ) * 8 + j] = temp_elems[i * 8
+                                + j];
                     }
                     // data_values[temp_loc_glo_index[i]] = 0;//temp_data_values[i];
                 }
@@ -85,7 +86,7 @@ int test_distribution( char *file_in, char *file_vtk_out, int *local_global_inde
 
         vtk_write_unstr_grid_header( file_in, file_vtk_out, nintci, nintcf, points_count, points,
                                      global_elems );
-        vtk_append_double( file_vtk_out, "CGUP", nintci, nintcf, data_values );
+        vtk_append_integer( file_vtk_out, "CGUP", nintci, nintcf, data_values );
         free( global_elems );
         free( data_values );
         free( temp_elems );

@@ -33,12 +33,12 @@
  * @param elems
  * @return
  */
-int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
-                     int *NEXTCI, int *NEXTCF, int ***LCC, double **BS, double **BE,
-                     double **BN, double **BW, double **BL, double **BH, double **BP,
-                     double **SU, int* points_count, int*** points, int** elems,
-                     int **local_global_index, int *elemcount, int *local_int_cells,
-                     int ***global_local_index, int **epart, int **npart, int *objval ) {
+int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF, int *NEXTCI,
+                     int *NEXTCF, int ***LCC, double **BS, double **BE, double **BN, double **BW,
+                     double **BL, double **BH, double **BP, double **SU, int* points_count,
+                     int*** points, int** elems, int **local_global_index, int *elemcount,
+                     int *local_int_cells, int ***global_local_index, int **epart, int **npart,
+                     int *objval ) {
     int i = 0;
     int my_rank, nproc;
     MPI_Status status;
@@ -64,9 +64,9 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
     ( *epart ) = (int *) malloc( sizeof(int) * tot_domain_cells );
     int *distr_buffer = ( *epart );
 
-    if(strcmp( part_type, "classical" ) == 0 ){
+    if ( strcmp( part_type, "classical" ) == 0 ) {
 
-        if(my_rank == 0 ){
+        if ( my_rank == 0 ) {
 
             int local_cells_size;
 
@@ -76,7 +76,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             int res_cells = tot_int_domain_cells % nproc;
 
             // Initializing the distribution array with -1
-            for ( int i = *NINTCI; i < *NEXTCF + 1; i++ ) {
+            for ( int i = 0; i < tot_domain_cells; i++ ) {
                 distr_buffer[i] = -1;
             }
 
@@ -85,30 +85,29 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             int temp_cells_size = 0;
             int offset = 0;
 
-            for( int i = 0; i < nproc; i++ ){
+            for ( int i = 0; i < nproc; i++ ) {
                 local_cells_size = normal_local_size;
-                if( res_cells > 0 ){
+                if ( res_cells > 0 ) {
                     local_cells_size++;
                     res_cells--;
                 }
-                for ( int j = 0; j < local_cells_size; j++ ){
-                    distr_buffer[ offset + j ] = i;
+                for ( int j = 0; j < local_cells_size; j++ ) {
+                    distr_buffer[offset + j] = i;
                     temp_cells_size++;
                 }
                 offset += local_cells_size;
             }
 
             /*for ( int i = 1; i < nproc ; i++ ){
-                // MPI_Send (&buf,count,datatype,dest,tag,comm)
-                MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
-            }*/
-
+             // MPI_Send (&buf,count,datatype,dest,tag,comm)
+             MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
+             }*/
 
         } /*else {
-            // Ready for receiving
-            MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD,
-                      &status );
-        }*/
+         // Ready for receiving
+         MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD,
+         &status );
+         }*/
 
     } else if ( strcmp( part_type, "myclassical" ) == 0 ) {
         if ( my_rank == 0 ) {
@@ -124,7 +123,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             int res_cells = tot_domain_cells % nproc;
 
             // Initializing the distribution array with -1
-            for ( int i = *NINTCI; i < *NEXTCF + 1; i++ ) {
+            for ( int i = 0; i < tot_domain_cells; i++ ) {
                 distr_buffer[i] = -1;
             }
 
@@ -185,14 +184,14 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             assert( temp_cells_size == tot_domain_cells );
             // Now distributing the buffer to all the processors
             /*for ( int i = 1; i < nproc; i++ ) {
-                // MPI_Send (&buf,count,datatype,dest,tag,comm)
-                MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
-            }*/
+             // MPI_Send (&buf,count,datatype,dest,tag,comm)
+             MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
+             }*/
         } else {
             MPI_Recv( elemcount, 1, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
             /*MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD,
-                      &status );*/
+             &status );*/
         }
 
     } else {
@@ -228,6 +227,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             idx_t options[METIS_NOPTIONS];
             idx_t *temp_epart;
             idx_t *temp_npart;
+            idx_t *objval;
 
             METIS_SetDefaultOptions( options );
 
@@ -259,11 +259,6 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
                 return -1;
             }
 
-            if ( ( ( *npart ) = (int *) malloc( ( nn ) * sizeof(int) ) ) == NULL ) {
-                fprintf( stderr, "malloc(npart) failed\n" );
-                return -1;
-            }
-
             if ( strcmp( part_type, "dual" ) == 0 ) {
                 if ( METIS_PartMeshDual( &ne, &nn, eptr, eind, vwgt, vsize, &ncommon, &nparts,
                                          tpwgts, options, (idx_t *) objval, temp_epart, temp_npart )
@@ -289,12 +284,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             for ( int i = 0; i < *NINTCF - *NINTCI + 1; i++ ) {
                 ( *epart )[i] = (int) temp_epart[i];
             }
-            for ( int i = 0; i < *points_count; i++ ) {
-                ( *npart )[i] = (int) temp_npart[i];
-            }
 
-            // Adjusting the position of the dsitr_array to the global position
-            distr_buffer = distr_buffer - *NINTCI;
             ( *elemcount ) = 0;
 
             free( temp_epart );
@@ -304,19 +294,19 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
 
             // Distributing the things to other processors
             /*for ( int i = nproc - 1; i > 0; i-- ) {
-                // MPI_Send (&buf,count,datatype,dest,tag,comm)
-                MPI_Send( ( *epart ), tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
-            }*/
+             // MPI_Send (&buf,count,datatype,dest,tag,comm)
+             MPI_Send( ( *epart ), tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
+             }*/
         }/* else {
-            // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            MPI_Recv( ( *epart ), tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
-            ( *elemcount ) = 0;
-        }*/
+         // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
+         MPI_Recv( ( *epart ), tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
+         ( *elemcount ) = 0;
+         }*/
     }
 
     // int MPI_Bcast ( void *buffer, int count, MPI_Datatype datatype, int root,
     //               MPI_Comm comm )
-    MPI_Bcast ( (void *)( *epart ),  tot_domain_cells, MPI_INT, 0, MPI_COMM_WORLD );
+    MPI_Bcast( (void *) ( *epart ), tot_domain_cells, MPI_INT, 0, MPI_COMM_WORLD );
 
     // For explicit global indexing
     distr_buffer = distr_buffer - *NINTCI;
@@ -336,7 +326,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
         }
     }
 
-    *local_global_index = malloc( ( *local_int_cells ) * sizeof(int) );
+    ( *local_global_index ) = malloc( ( *local_int_cells ) * sizeof(int) );
 
     // Only filling the internal cells in the global_local_index
     int j = 0;
@@ -387,7 +377,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             SEEK_SET );
             for ( int j = 0; j < 6; j++ ) {
                 fread( &( *LCC )[i][j], sizeof(int), 1, fp );
-                if ( ( ( *LCC )[i][j] > *NINTCF ) & ( distr_buffer[( ( *LCC )[i][j] )] == -1 ) ) {
+                if ( ( ( *LCC )[i][j] > *NINTCF ) ) {
                     distr_buffer[( ( *LCC )[i][j] )] = my_rank;
                     ( *elemcount )++;
                 }
