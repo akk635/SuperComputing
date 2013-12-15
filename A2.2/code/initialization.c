@@ -26,6 +26,8 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     int my_rank, nproc;
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );
+    MPI_Status status[nproc];
+    MPI_Request request[nproc];
 
     // read-in the input file
     int f_status = read_binary_geo( file_in, part_type, &*nintci, &*nintcf, &*nextci, &*nextcf,
@@ -101,12 +103,12 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         for ( int j = 0; j < 6; j++ ) {
             // Only appending the internal cells
             if ( ( temp_rank = ( *global_local_index )[( *lcc )[i][j]][0] ) != my_rank ) {
+                // Just for the counting
                 if ( !contains( ( *lcc )[i][j], ( *recv_list )[temp_rank],
                                 ( *recv_count )[temp_rank] ) ) {
                     // Adding the unique global indices
                     ( *recv_list )[temp_rank][( ( *recv_count )[temp_rank] )++] = ( *lcc )[i][j];
                 }
-
                 if ( !contains( i, ( *send_list )[temp_rank], ( *send_count )[temp_rank] ) ) {
                     // Adding the global indices to be sent to each processor
                     ( *send_list )[temp_rank][( ( *send_count )[temp_rank] )++] = i;
@@ -117,13 +119,42 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
 
     assert( ( *recv_count )[my_rank] == 0 );
     assert( ( *send_count )[my_rank] == 0 );
-    // Now the ghost cells have to be allocated based on the recv counts
 
+    int **index_send_list = (int **) malloc( nproc * sizeof(int *) );
+    // Allocating an initialising
+    for ( int i = 0; i < nproc; i++ ) {
+        index_send_list[i] = (int *) malloc( ( *send_count )[i] * sizeof(int) );
+        assert( index_send_list[i] != NULL );
+        for ( int j = 0; j < ( *send_count )[i]; j++ ) {
+            index_send_list[i][j] = ( *local_global_index )[( *send_list )[i][j]];
+        }
+    }
+    // Correcting the list using communication
+    /*    MPI_Sendrecv( &sendbuf, sendcount, sendtype, dest, sendtag, &recvbuf, recvcount, recvtype,
+     source, recvtag, comm, &status );*/
+    for ( int i = 0; i < nproc; i++ ) {
+        printf("rank = %d, iter = %d \n", my_rank, i);
+        if ( ( *send_count ) > 0 ) {
+            // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
+            MPI_Isend( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, request + i );
+/*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
+                          ( *recv_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, &status );*/
+            // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
+            MPI_Recv( recv_list[i], ( *recv_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, status + i);
+        }
+    }
+
+    printf("no dead lock \n");
+    // Freeing the buffers
+    for ( int i = 0; i < nproc; i++ ) {
+        free( index_send_list[i] );
+    }
+    free( neighbors );
     return 0;
 }
 
 int contains( int index, int *search_array, int size ) {
-    for ( int i = 0; i < size; i++ ) {
+    for ( int i = size - 1; i >= 0; i-- ) {
         if ( search_array[i] == index ) {
             return 1;
         }
