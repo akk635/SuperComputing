@@ -140,16 +140,16 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
 /*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
                           ( *recv_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, &status );*/
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            MPI_Recv( recv_list[i], ( *recv_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, status + i);
+            MPI_Recv( recv_list[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, status + i);
         }
     }
 
     printf("no dead lock \n");
     // Freeing the buffers
-    for ( int i = 0; i < nproc; i++ ) {
+/*    for ( int i = 0; i < nproc; i++ ) {
         free( index_send_list[i] );
-    }
-    free( neighbors );
+    }*/
+/*    free( neighbors );*/
     return 0;
 }
 

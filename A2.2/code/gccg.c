@@ -103,17 +103,17 @@ int main( int argc, char *argv[] ) {
                        writing_proc );*/
 
     // Implement this function in test_functions.c and call it here
-    test_communication( file_in, file_vtk_out, local_global_index, nintci,
+/*    test_communication( file_in, file_vtk_out, local_global_index, nintci,
                        nintcf, points_count, points, elems, local_int_cells,
-                       send_count, send_list, recv_count, recv_list, writing_proc );
+                       send_count, send_list, recv_count, recv_list, writing_proc );*/
 
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
-    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
+/*    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
      be, bh, cnorm, var, su, cgup, &residual_ratio,
      local_global_index, global_local_index, neighbors_count,
-     send_count, send_list, recv_count, recv_list, elemcount, local_int_cells);
+     send_count, send_list, recv_count, recv_list, elemcount, local_int_cells);*/
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
