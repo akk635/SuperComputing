@@ -134,7 +134,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
      source, recvtag, comm, &status );*/
     for ( int i = 0; i < nproc; i++ ) {
         printf("rank = %d, iter = %d \n", my_rank, i);
-        if ( ( *send_count ) > 0 ) {
+        if ( ( *send_count )[i] > 0 ) {
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
             MPI_Isend( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, request + i );
 /*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
