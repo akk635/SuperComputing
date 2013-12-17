@@ -117,9 +117,15 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         }
     }
 
+    if( my_rank == 0){
+        printf("send_count : %d \n", ( *send_count )[1]);
+    }else {
+        printf("recv_count : %d \n", ( *recv_count )[0]);
+    }
+
     assert( ( *recv_count )[my_rank] == 0 );
     assert( ( *send_count )[my_rank] == 0 );
-
+/*
     int **index_send_list = (int **) malloc( nproc * sizeof(int *) );
     // Allocating an initialising
     for ( int i = 0; i < nproc; i++ ) {
@@ -130,21 +136,21 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         }
     }
     // Correcting the list using communication
-    /*    MPI_Sendrecv( &sendbuf, sendcount, sendtype, dest, sendtag, &recvbuf, recvcount, recvtype,
-     source, recvtag, comm, &status );*/
+        MPI_Sendrecv( &sendbuf, sendcount, sendtype, dest, sendtag, &recvbuf, recvcount, recvtype,
+     source, recvtag, comm, &status );
     for ( int i = 0; i < nproc; i++ ) {
         printf("rank = %d, iter = %d \n", my_rank, i);
         if ( ( *send_count )[i] > 0 ) {
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
-            MPI_Isend( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, request + i );
-/*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
-                          ( *recv_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, &status );*/
+            // MPI_Isend( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, request + i );
+            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
+                          ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, &status );
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            MPI_Recv( recv_list[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, status + i);
+            // MPI_Recv( recv_list[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, status + i);
         }
     }
 
-    printf("no dead lock \n");
+    printf("no dead lock \n");*/
     // Freeing the buffers
 /*    for ( int i = 0; i < nproc; i++ ) {
         free( index_send_list[i] );

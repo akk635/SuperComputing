@@ -121,6 +121,7 @@ int main( int argc, char *argv[] ) {
      points, elems, var, cgup, su);*/
     /********** END FINALIZATION **********/
 
+    printf("I am out of maze \n");
     free( cnorm );
     free( var );
     free( cgup );
@@ -142,7 +143,6 @@ int main( int argc, char *argv[] ) {
         free( points[i] );
     }
 
-    free( points );
     free( epart );
 
     free( local_global_index );
