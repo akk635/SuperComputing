@@ -175,20 +175,20 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
              ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, &status );*/
 
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            MPI_Recv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
-                      status + i );
+            /*            MPI_Recv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
+             status + i );*/
             // MPI_Irecv(buffer,count,type,source,tag,comm,request)
-            /*            MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
-             nproc + request + i );*/
+            MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
+                       nproc + request + i );
         }
     }
 
-    /*    for ( int i = 0; i < nproc; i++ ) {
-     if ( i != my_rank ) {
-     MPI_Wait( request + i, status + i );
-     MPI_Wait( nproc + request + i, status + i );
-     }
-     }*/
+    for ( int i = 0; i < nproc; i++ ) {
+        if ( i != my_rank ) {
+            MPI_Wait( request + i, status + i );
+            MPI_Wait( nproc + request + i, status + i );
+        }
+    }
 
     counter_int_cells = counter_int_cells + ( *nintci );
     printf( "no dead lock \n" );

@@ -10,9 +10,9 @@
 #include <math.h>
 #include <mpi.h>
 #include <assert.h>
+#include <papi.h>
 
-double getRecv( int global_index, double **recv_buffer, int **recv_list, int **global_local_index,
-                int* count );
+double getRecv( int global_index, double **recv_buffer, int **recv_list, int temp_rank, int *count );
 int compar( const void *, const void * );
 
 int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, int** lcc,
@@ -33,7 +33,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     int my_rank, nproc;
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );
-    MPI_Request request[nproc];
+    MPI_Request request[2 * nproc];
     MPI_Status status[nproc];
 
     int **blocklengths;
@@ -64,7 +64,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
 
 #define solve(global_index) \
         (global_local_index[global_index][0]) == (my_rank) ? (direc1[global_local_index[global_index][1]]) \
-                : getRecv( global_index, recv_buffer, recv_list, global_local_index, recv_count )
+                : getRecv( global_index, recv_buffer, recv_list, global_local_index[global_index][0], recv_count )
 
     /** the reference residual */
     double resref = 0.0;
@@ -114,8 +114,18 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
             if ( recv_count[i] > 0 ) {
                 // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
                 // Blocked until exact values are received at the application buffer
-                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
-                          status + i );
+/*                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
+                          status + i );*/
+                // MPI_Irecv(buffer,count,type,source,tag,comm,request)
+                MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
+                          nproc + request + i );
+            }
+        }
+
+        for ( int i = 0; i < nproc; i++ ) {
+            if ( i != my_rank ) {
+                MPI_Wait( request + i, status + i );
+                MPI_Wait( nproc + request + i, status + i );
             }
         }
 
@@ -249,10 +259,8 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     return iter;
 }
 
-double getRecv( int global_index, double **recv_buffer, int **recv_list, int **global_local_index,
-                int *count ) {
+double getRecv( int global_index, double **recv_buffer, int **recv_list, int temp_rank, int *count ) {
     const int *temp_pointer = &global_index;
-    int temp_rank = global_local_index[global_index][0];
     const int* base = recv_list[temp_rank];
     int arraysize = count[temp_rank];
     int *index = (int *) bsearch( (void *) temp_pointer, (void *) base, (size_t) arraysize,
