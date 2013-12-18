@@ -70,7 +70,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     double resref = 0.0;
 
     /** array storing residuals */
-    double *resvec = (double *) calloc( sizeof(double), local_int_cells );
+    double *resvec = (double *) calloc( local_int_cells, sizeof(double) );
 
     // initialize the reference residual
     for ( nc = 0; nc < local_int_cells; nc++ ) {
@@ -88,12 +88,12 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     }
 
     /** the computation vectors */
-    double *direc1 = (double *) calloc( sizeof(double), elemcount );
-    double *direc2 = (double *) calloc( sizeof(double), elemcount );
-    double *adxor1 = (double *) calloc( sizeof(double), local_int_cells );
-    double *adxor2 = (double *) calloc( sizeof(double), local_int_cells );
-    double *dxor1 = (double *) calloc( sizeof(double), local_int_cells );
-    double *dxor2 = (double *) calloc( sizeof(double), local_int_cells );
+    double *direc1 = (double *) calloc( elemcount, sizeof(double) );
+    double *direc2 = (double *) calloc( elemcount, sizeof(double) );
+    double *adxor1 = (double *) calloc( local_int_cells, sizeof(double) );
+    double *adxor2 = (double *) calloc( local_int_cells, sizeof(double) );
+    double *dxor1 = (double *) calloc( local_int_cells, sizeof(double) );
+    double *dxor2 = (double *) calloc( local_int_cells, sizeof(double) );
 
     while ( iter < max_iters ) {
         /**********  START COMP PHASE 1 **********/
@@ -114,17 +114,17 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
             if ( recv_count[i] > 0 ) {
                 // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
                 // Blocked until exact values are received at the application buffer
-                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, i, MPI_COMM_WORLD,
+                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
                           status + i );
             }
         }
 
         // compute new guess (approximation) for direc
         for ( nc = 0; nc < local_int_cells; nc++ ) {
-            direc2[nc] = bp[nc] * direc1[nc] - bs[nc] * solve( lcc[nc][0] )
-                         - be[nc] * solve( lcc[nc][1] ) - bn[nc] * solve( lcc[nc][2] )
-                         - bw[nc] * solve( lcc[nc][3] ) - bl[nc] * solve( lcc[nc][4] )
-                         - bh[nc] * solve( lcc[nc][5] );
+            direc2[nc] = bp[nc] * direc1[nc] - bs[nc] * ( solve( lcc[nc][0] ) )
+                    - be[nc] * ( solve( lcc[nc][1] ) ) - bn[nc] * ( solve( lcc[nc][2] ) )
+                    - bw[nc] * ( solve( lcc[nc][3] ) ) - bl[nc] * ( solve( lcc[nc][4] ) )
+                    - bh[nc] * ( solve( lcc[nc][5] ) );
         }
         /********** END COMP PHASE 1 **********/
 
@@ -186,7 +186,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
             omega = omega + resvec[nc] * direc2[nc];
         }
         // MPI_Allreduce (&sendbuf,&recvbuf,count,datatype,op,comm)
-        MPI_Allreduce( MPI_IN_PLACE, &(cnorm[nor]), 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Allreduce( MPI_IN_PLACE, &( cnorm[nor] ), 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         // MPI_Allreduce (&sendbuf,&recvbuf,count,datatype,op,comm)
         MPI_Allreduce( MPI_IN_PLACE, &omega, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
@@ -243,6 +243,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     for ( int i = 0; i < nproc; i++ ) {
         free( blocklengths[i] );
         free( recv_buffer[i] );
+        MPI_Type_free( indextype + i );
     }
 
     return iter;
@@ -257,7 +258,7 @@ double getRecv( int global_index, double **recv_buffer, int **recv_list, int **g
     int *index = (int *) bsearch( (void *) temp_pointer, (void *) base, (size_t) arraysize,
                                   sizeof(int), compar );
     assert( index != NULL );
-    assert( ( index - base ) == ( (char *) index - (char*) base ) / sizeof(int) );
+    assert( ( index - base ) == ( (char * ) index - (char* ) base ) / sizeof(int) );
     return recv_buffer[temp_rank][index - base];
 }
 
