@@ -9,6 +9,9 @@ CFLAGS = -Wall -g -O0 -std=c99
 LIBS = -lm -lmetis 
 METIS_INCLUDE = $(METIS_INC) 
 METIS_LIB_PATH = $(METIS_LIB)
+CFLAGS += $(PAPI_INC)
+LIBS += $(PAPI_LIB)
+
 
 LIBPOS=libpos.a
 AR = ar
