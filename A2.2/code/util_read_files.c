@@ -217,8 +217,8 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
 
             idx_t ne = *NINTCF - *NINTCI + 1;
             idx_t nn = *points_count;
-            idx_t *eptr;
-            idx_t *eind;
+            idx_t *eptr =NULL;
+            idx_t *eind= NULL;
             idx_t *vwgt = NULL;
             idx_t *vsize = NULL;
             idx_t ncommon = 4;
@@ -227,7 +227,6 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             idx_t options[METIS_NOPTIONS];
             idx_t *temp_epart;
             idx_t *temp_npart;
-            idx_t *objval;
 
             METIS_SetDefaultOptions( options );
 

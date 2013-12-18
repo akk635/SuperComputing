@@ -51,7 +51,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     MPI_Datatype *indextype;
     indextype = (MPI_Datatype *) malloc( nproc * sizeof(MPI_Datatype) );
     for ( int i = 0; i < nproc; i++ ) {
-        MPI_Type_indexed( send_count[i], blocklengths, send_list[i], MPI_DOUBLE, indextype + i );
+        MPI_Type_indexed( send_count[i], blocklengths[i], send_list[i], MPI_DOUBLE, indextype + i );
         MPI_Type_commit( indextype + i );
     }
 
@@ -135,12 +135,14 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
             oc1 = 0;
             occ = 0;
 
-            for ( nc = nintci; nc <= nintcf; nc++ ) {
+            for ( nc = 0; nc < local_int_cells; nc++ ) {
                 occ = occ + direc2[nc] * adxor1[nc];
             }
+            // MPI_Allreduce (&sendbuf,&recvbuf,count,datatype,op,comm)
+            MPI_Allreduce( MPI_IN_PLACE, &occ, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
             oc1 = occ / cnorm[1];
-            for ( nc = nintci; nc <= nintcf; nc++ ) {
+            for ( nc = 0; nc < local_int_cells; nc++ ) {
                 direc2[nc] = direc2[nc] - oc1 * adxor1[nc];
                 direc1[nc] = direc1[nc] - oc1 * dxor1[nc];
             }
@@ -151,19 +153,23 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
                 oc1 = 0;
                 occ = 0;
 
-                for ( nc = nintci; nc <= nintcf; nc++ ) {
+                for ( nc = 0; nc < local_int_cells; nc++ ) {
                     occ = occ + direc2[nc] * adxor1[nc];
                 }
+                // MPI_Allreduce (&sendbuf,&recvbuf,count,datatype,op,comm)
+                MPI_Allreduce( MPI_IN_PLACE, &occ, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
                 oc1 = occ / cnorm[1];
                 oc2 = 0;
                 occ = 0;
-                for ( nc = nintci; nc <= nintcf; nc++ ) {
+                for ( nc = 0; nc < local_int_cells; nc++ ) {
                     occ = occ + direc2[nc] * adxor2[nc];
                 }
+                // MPI_Allreduce (&sendbuf,&recvbuf,count,datatype,op,comm)
+                MPI_Allreduce( MPI_IN_PLACE, &occ, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
                 oc2 = occ / cnorm[2];
-                for ( nc = nintci; nc <= nintcf; nc++ ) {
+                for ( nc = 0; nc < local_int_cells; nc++ ) {
                     direc1[nc] = direc1[nc] - oc1 * dxor1[nc] - oc2 * dxor2[nc];
                     direc2[nc] = direc2[nc] - oc1 * adxor1[nc] - oc2 * adxor2[nc];
                 }
@@ -175,18 +181,24 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
         // compute the new residual
         cnorm[nor] = 0;
         double omega = 0;
-        for ( nc = nintci; nc <= nintcf; nc++ ) {
+        for ( nc = 0; nc < local_int_cells; nc++ ) {
             cnorm[nor] = cnorm[nor] + direc2[nc] * direc2[nc];
             omega = omega + resvec[nc] * direc2[nc];
         }
+        // MPI_Allreduce (&sendbuf,&recvbuf,count,datatype,op,comm)
+        MPI_Allreduce( MPI_IN_PLACE, &(cnorm[nor]), 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        // MPI_Allreduce (&sendbuf,&recvbuf,count,datatype,op,comm)
+        MPI_Allreduce( MPI_IN_PLACE, &omega, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
         omega = omega / cnorm[nor];
         double res_updated = 0.0;
-        for ( nc = nintci; nc <= nintcf; nc++ ) {
+        for ( nc = 0; nc < local_int_cells; nc++ ) {
             resvec[nc] = resvec[nc] - omega * direc2[nc];
             res_updated = res_updated + resvec[nc] * resvec[nc];
             var[nc] = var[nc] + omega * direc1[nc];
         }
+        // MPI_Allreduce (&sendbuf,&recvbuf,count,datatype,op,comm)
+        MPI_Allreduce( MPI_IN_PLACE, &res_updated, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
         res_updated = sqrt( res_updated );
         *residual_ratio = res_updated / resref;
@@ -202,13 +214,13 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
             nor = 1;
         } else {
             if ( nor == 1 ) {
-                for ( nc = nintci; nc <= nintcf; nc++ ) {
+                for ( nc = 0; nc < local_int_cells; nc++ ) {
                     dxor1[nc] = direc1[nc];
                     adxor1[nc] = direc2[nc];
                 }
             } else {
                 if ( nor == 2 ) {
-                    for ( nc = nintci; nc <= nintcf; nc++ ) {
+                    for ( nc = 0; nc < local_int_cells; nc++ ) {
                         dxor2[nc] = direc1[nc];
                         adxor2[nc] = direc2[nc];
                     }

@@ -11,7 +11,7 @@
 #include "util_read_files.h"
 #include "initialization.h"
 
-int contains( int index, int *search_array, int size );
+/*int contains( int index, int *search_array, int size );*/
 
 int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, int* nextci,
                     int* nextcf, int*** lcc, double** bs, double** be, double** bn, double** bw,
@@ -27,7 +27,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );
     MPI_Status status[nproc];
-    MPI_Request request[nproc];
+    MPI_Request request[2 * nproc];
 
     // read-in the input file
     int f_status = read_binary_geo( file_in, part_type, &*nintci, &*nintcf, &*nextci, &*nextcf,
@@ -66,66 +66,93 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         ( *bh )[i] = 0.0;
         ( *bl )[i] = 0.0;
     }
-
     int temp_rank = 0;
+    // Counter for the internal domain cells for the recv_count calc
+    int *counter_int_cells = (int *) calloc( ( ( *nintcf ) - ( *nintci ) + 1 ), sizeof(int) );
+    assert( counter_int_cells != NULL );
+    // Making it global access
+    counter_int_cells = counter_int_cells - ( *nintci );
+    // For the last send cell
+    int *last_send = (int *) malloc( nproc * sizeof(int) );
+
+    // Initialising with -1's
+    for ( int i = 0; i < nproc; i++ ) {
+        last_send[i] = -1;
+    }
+
+    printf( "working \n" );
     // Temporary counts just for the allocation
-    int *neighbors = calloc( nproc, sizeof(int) );
-    // Provides with the max size of the array
+    /*    int *neighbors = calloc( nproc, sizeof(int) );
+     // Provides with the max size of the array
+     for ( int i = 0; i < ( *local_int_cells ); i++ ) {
+     for ( int j = 0; j < 6; j++ ) {
+     // Only appending the internal cells
+     if ( ( temp_rank = ( *global_local_index )[( *lcc )[i][j]][0] ) != my_rank ) {
+     neighbors[temp_rank] += 1;
+     }
+     }
+     }*/
+
+    // macro for counting the send_count
+#define match( rank, index, list ) \
+        (list[rank]) == (index) ? (int)1 : (int)0
+
+    printf( "true : %d \n", match( my_rank, 0, last_send ) );
+
+    // For the actual count
+    *recv_count = (int *) calloc( nproc, sizeof(int) );
+    *send_count = (int *) calloc( nproc, sizeof(int) );
+
     for ( int i = 0; i < ( *local_int_cells ); i++ ) {
         for ( int j = 0; j < 6; j++ ) {
-            // Only appending the internal cells
             if ( ( temp_rank = ( *global_local_index )[( *lcc )[i][j]][0] ) != my_rank ) {
-                neighbors[temp_rank] += 1;
+                if ( counter_int_cells[( *lcc )[i][j]] == 0 ) {
+                    counter_int_cells[( *lcc )[i][j]] = 1;
+                    ( ( *recv_count )[temp_rank] )++;
+                }
+                if ( !( match( temp_rank, i, last_send ) ) ) {
+                    last_send[temp_rank] = i;
+                    ( ( *send_count )[temp_rank] )++;
+                }
             }
         }
     }
-
-    assert( neighbors[my_rank] == 0 );
-
-    // For the actual count
-    *recv_count = calloc( nproc, sizeof(int) );
-    *send_count = calloc( nproc, sizeof(int) );
+    if ( my_rank == 1 ) {
+        printf( " send_count : %d \n", ( *send_count )[0] );
+    }
 
     ( *send_list ) = (int **) malloc( nproc * sizeof(int *) );
     // Allocating with the max array size
     for ( int i = 0; i < nproc; i++ ) {
-        ( *send_list )[i] = (int *) calloc( neighbors[i], sizeof(int) );
+        ( *send_list )[i] = (int *) calloc( ( *send_count )[i], sizeof(int) );
     }
 
     ( *recv_list ) = (int **) malloc( nproc * sizeof(int *) );
 
     // Allocating the max array size
     for ( int i = 0; i < nproc; i++ ) {
-        ( *recv_list )[i] = (int *) calloc( neighbors[i], sizeof(int) );
+        ( *recv_list )[i] = (int *) calloc( ( *recv_count )[i], sizeof(int) );
     }
+
+    int *counter = (int *) calloc( nproc, sizeof(int) );
 
     for ( int i = 0; i < ( *local_int_cells ); i++ ) {
         for ( int j = 0; j < 6; j++ ) {
             // Only appending the internal cells
             if ( ( temp_rank = ( *global_local_index )[( *lcc )[i][j]][0] ) != my_rank ) {
-                // Just for the counting
-                if ( !contains( ( *lcc )[i][j], ( *recv_list )[temp_rank],
-                                ( *recv_count )[temp_rank] ) ) {
-                    // Adding the unique global indices
-                    ( *recv_list )[temp_rank][( ( *recv_count )[temp_rank] )++] = ( *lcc )[i][j];
-                }
-                if ( !contains( i, ( *send_list )[temp_rank], ( *send_count )[temp_rank] ) ) {
+                if ( !( match( temp_rank, i, last_send ) ) ) {
                     // Adding the global indices to be sent to each processor
-                    ( *send_list )[temp_rank][( ( *send_count )[temp_rank] )++] = i;
+                    last_send[temp_rank] = i;
+                    ( *send_list )[temp_rank][( counter[temp_rank] )++] = i;
                 }
             }
         }
     }
 
-    if( my_rank == 0){
-        printf("send_count : %d \n", ( *send_count )[1]);
-    }else {
-        printf("recv_count : %d \n", ( *recv_count )[0]);
+    for ( int i = 0; i < nproc; i++ ) {
+        assert( counter[i] == ( *send_count )[i] );
     }
 
-    assert( ( *recv_count )[my_rank] == 0 );
-    assert( ( *send_count )[my_rank] == 0 );
-/*
     int **index_send_list = (int **) malloc( nproc * sizeof(int *) );
     // Allocating an initialising
     for ( int i = 0; i < nproc; i++ ) {
@@ -136,35 +163,55 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         }
     }
     // Correcting the list using communication
-        MPI_Sendrecv( &sendbuf, sendcount, sendtype, dest, sendtag, &recvbuf, recvcount, recvtype,
-     source, recvtag, comm, &status );
+    // MPI_Sendrecv( &sendbuf, sendcount, sendtype, dest, sendtag, &recvbuf, recvcount, recvtype,
+    // source, recvtag, comm, &status );
     for ( int i = 0; i < nproc; i++ ) {
-        printf("rank = %d, iter = %d \n", my_rank, i);
         if ( ( *send_count )[i] > 0 ) {
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
-            // MPI_Isend( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD, request + i );
-            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
-                          ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, &status );
+            MPI_Isend( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD,
+                       request + i );
+
+            /*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
+             ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, &status );*/
+
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            // MPI_Recv( recv_list[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, status + i);
+            MPI_Recv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
+                      status + i );
+            // MPI_Irecv(buffer,count,type,source,tag,comm,request)
+            /*            MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
+             nproc + request + i );*/
         }
     }
 
-    printf("no dead lock \n");*/
+    /*    for ( int i = 0; i < nproc; i++ ) {
+     if ( i != my_rank ) {
+     MPI_Wait( request + i, status + i );
+     MPI_Wait( nproc + request + i, status + i );
+     }
+     }*/
+
+    counter_int_cells = counter_int_cells + ( *nintci );
+    printf( "no dead lock \n" );
     // Freeing the buffers
-/*    for ( int i = 0; i < nproc; i++ ) {
+    for ( int i = 0; i < nproc; i++ ) {
         free( index_send_list[i] );
-    }*/
-/*    free( neighbors );*/
+    }
+
+    free( counter );
+    free( counter_int_cells );
+    free( last_send );
+
     return 0;
 }
 
-int contains( int index, int *search_array, int size ) {
-    for ( int i = size - 1; i >= 0; i-- ) {
-        if ( search_array[i] == index ) {
-            return 1;
-        }
-    }
-    return 0;
-}
+/*
+ int contains( int index, int *search_array, int size ) {
+ for ( int i = size - 1; i >= 0; i-- ) {
+ if ( search_array[i] == index ) {
+ return 1;
+ }
+ }
+ return 0;
+ }
+ */
 

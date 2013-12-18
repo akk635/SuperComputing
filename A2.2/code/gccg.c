@@ -97,23 +97,23 @@ int main( int argc, char *argv[] ) {
     sprintf( file_vtk_out, "%s_cgup.vtk", out_prefix );
 
     // Implement this function in test_functions.c and call it here
-    int writing_proc = 1;
+    int writing_proc = 0;
 /*    test_distribution( file_in, file_vtk_out, local_global_index, global_local_index, nintci,
                        nintcf, points_count, points, elems, local_int_cells, cgup, elemcount,
                        writing_proc );*/
 
     // Implement this function in test_functions.c and call it here
-/*    test_communication( file_in, file_vtk_out, local_global_index, nintci,
+    test_communication( file_in, file_vtk_out, local_global_index, nintci,
                        nintcf, points_count, points, elems, local_int_cells,
-                       send_count, send_list, recv_count, recv_list, writing_proc );*/
+                       send_count, send_list, recv_count, recv_list, writing_proc );
 
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
-/*    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
+    int total_iters = compute_solution(max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
      be, bh, cnorm, var, su, cgup, &residual_ratio,
      local_global_index, global_local_index, neighbors_count,
-     send_count, send_list, recv_count, recv_list, elemcount, local_int_cells);*/
+     send_count, send_list, recv_count, recv_list, elemcount, local_int_cells);
     /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
@@ -122,7 +122,7 @@ int main( int argc, char *argv[] ) {
     /********** END FINALIZATION **********/
 
     printf("I am out of maze \n");
-    free( cnorm );
+/*    free( cnorm );
     free( var );
     free( cgup );
     free( su );
@@ -149,7 +149,7 @@ int main( int argc, char *argv[] ) {
 
     for ( int i = nintci; i <= nextcf; i++ ) {
         free( global_local_index[i] );
-    }
+    }*/
 
     MPI_Finalize();    /// cleanup MPI
 
