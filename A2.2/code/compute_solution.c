@@ -114,20 +114,22 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
             if ( recv_count[i] > 0 ) {
                 // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
                 // Blocked until exact values are received at the application buffer
-/*                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
-                          status + i );*/
+                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
+                          status + i );
                 // MPI_Irecv(buffer,count,type,source,tag,comm,request)
-                MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
-                          nproc + request + i );
+/*                MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
+                          nproc + request + i );*/
             }
         }
 
+/*
         for ( int i = 0; i < nproc; i++ ) {
             if ( i != my_rank ) {
                 MPI_Wait( request + i, status + i );
                 MPI_Wait( nproc + request + i, status + i );
             }
         }
+*/
 
         // compute new guess (approximation) for direc
         for ( nc = 0; nc < local_int_cells; nc++ ) {

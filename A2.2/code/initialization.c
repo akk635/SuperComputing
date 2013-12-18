@@ -26,7 +26,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     int my_rank, nproc;
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );
-    MPI_Status status[nproc];
+    MPI_Status *status;
     MPI_Request request[2 * nproc];
 
     // read-in the input file
@@ -100,8 +100,8 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     printf( "true : %d \n", match( my_rank, 0, last_send ) );
 
     // For the actual count
-    *recv_count = (int *) calloc( nproc, sizeof(int) );
-    *send_count = (int *) calloc( nproc, sizeof(int) );
+    ( *recv_count ) = (int *) calloc( nproc, sizeof(int) );
+    ( *send_count ) = (int *) calloc( nproc, sizeof(int) );
 
     for ( int i = 0; i < ( *local_int_cells ); i++ ) {
         for ( int j = 0; j < 6; j++ ) {
@@ -117,6 +117,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
             }
         }
     }
+
     if ( my_rank == 1 ) {
         printf( " send_count : %d \n", ( *send_count )[0] );
     }
@@ -168,7 +169,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     for ( int i = 0; i < nproc; i++ ) {
         if ( ( *send_count )[i] > 0 ) {
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
-            MPI_Isend( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD,
+            MPI_Isend( &(index_send_list[i][0]), ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD,
                        request + i );
 
             /*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
@@ -185,10 +186,12 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
 
     for ( int i = 0; i < nproc; i++ ) {
         if ( i != my_rank ) {
-            MPI_Wait( request + i, status + i );
-            MPI_Wait( nproc + request + i, status + i );
+            MPI_Wait( request + i, status );
+            MPI_Wait( nproc + request + i, status );
         }
     }
+
+    MPI_Barrier( MPI_COMM_WORLD );
 
     counter_int_cells = counter_int_cells + ( *nintci );
     printf( "no dead lock \n" );

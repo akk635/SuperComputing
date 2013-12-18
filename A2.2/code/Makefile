@@ -6,7 +6,7 @@
 
 CC = mpicc
 CFLAGS = -Wall -g -O0 -std=c99
-LIBS = -lm -lmetis 
+LIBS = -lm -lmetis -lpapi
 METIS_INCLUDE = $(METIS_INC) 
 METIS_LIB_PATH = $(METIS_LIB)
 CFLAGS += $(PAPI_INC)
