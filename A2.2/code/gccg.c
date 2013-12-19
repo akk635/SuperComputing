@@ -134,34 +134,34 @@ int main( int argc, char *argv[] ) {
     /********** END FINALIZATION **********/
 
     printf( "I am out of maze \n" );
-        free( cnorm );
-     free( var );
-     free( cgup );
-     free( su );
-     free( bp );
-     free( bh );
-     free( bl );
-     free( bw );
-     free( bn );
-     free( be );
-     free( bs );
-     free( elems );
+    free( cnorm );
+    free( var );
+    free( cgup );
+    free( su );
+    free( bp );
+    free( bh );
+    free( bl );
+    free( bw );
+    free( bn );
+    free( be );
+    free( bs );
+    free( elems );
 
-     for ( int i = 0; i < local_int_cells; i++ ) {
-     free(lcc[i]);
-     }
+    for ( int i = 0; i < local_int_cells; i++ ) {
+        free( lcc[i] );
+    }
 
-     for ( i = 0; i < points_count; i++ ) {
-     free( points[i] );
-     }
+    for ( i = 0; i < points_count; i++ ) {
+        free( points[i] );
+    }
 
-     free( epart );
+    free( epart );
 
-     free( local_global_index );
+    free( local_global_index );
 
-     for ( int i = nintci; i <= nextcf; i++ ) {
-     free( global_local_index[i] );
-     }
+    for ( int i = nintci; i <= nextcf; i++ ) {
+        free( global_local_index[i] );
+    }
 
     MPI_Finalize();    /// cleanup MPI
 

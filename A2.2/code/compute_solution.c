@@ -51,15 +51,25 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     MPI_Datatype *indextype;
     indextype = (MPI_Datatype *) malloc( nproc * sizeof(MPI_Datatype) );
     for ( int i = 0; i < nproc; i++ ) {
-        MPI_Type_indexed( send_count[i], blocklengths[i], send_list[i], MPI_DOUBLE, indextype + i );
-        MPI_Type_commit( indextype + i );
+        if ( ( send_count[i] ) > 0 ) {
+            MPI_Type_indexed( send_count[i], blocklengths[i], send_list[i], MPI_DOUBLE,
+                              &( indextype[i] ) );
+        } else {
+            MPI_Type_indexed( 1, blocklengths[i], send_list[i], MPI_DOUBLE, &( indextype[i] ) );
+        }
+        MPI_Type_commit( &( indextype[i] ) );
     }
 
     // For receiving the communication
     double **recv_buffer;
     recv_buffer = (double **) malloc( nproc * sizeof(double *) );
     for ( int i = 0; i < nproc; i++ ) {
-        ( recv_buffer )[i] = (double*) malloc( recv_count[i] * sizeof(double) );
+        if ( recv_count[i] > 0 ) {
+            ( recv_buffer )[i] = (double*) malloc( recv_count[i] * sizeof(double) );
+        } else {
+            ( recv_buffer )[i] = (double*) calloc( 1, sizeof(double) );
+        }
+
     }
 
 #define solve(global_index) \
@@ -112,28 +122,28 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
             }
         }
 
-/*
-        for ( int i = 0; i < nproc; i++ ) {
-            if ( recv_count[i] > 0 ) {
-                // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-                // Blocked until exact values are received at the application buffer
-                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
-                          status + i );
-                // MPI_Irecv(buffer,count,type,source,tag,comm,request)
-                MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
-                          nproc + request + i );
-            }
-        }
-*/
+        /*
+         for ( int i = 0; i < nproc; i++ ) {
+         if ( recv_count[i] > 0 ) {
+         // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
+         // Blocked until exact values are received at the application buffer
+         MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
+         status + i );
+         // MPI_Irecv(buffer,count,type,source,tag,comm,request)
+         MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
+         nproc + request + i );
+         }
+         }
+         */
 
-/*
-        for ( int i = 0; i < nproc; i++ ) {
-            if ( i != my_rank ) {
-                MPI_Wait( request + i, status + i );
-                MPI_Wait( nproc + request + i, status + i );
-            }
-        }
-*/
+        /*
+         for ( int i = 0; i < nproc; i++ ) {
+         if ( i != my_rank ) {
+         MPI_Wait( request + i, status + i );
+         MPI_Wait( nproc + request + i, status + i );
+         }
+         }
+         */
 
         // compute new guess (approximation) for direc
         for ( nc = 0; nc < local_int_cells; nc++ ) {
@@ -259,7 +269,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     for ( int i = 0; i < nproc; i++ ) {
         free( blocklengths[i] );
         free( recv_buffer[i] );
-        MPI_Type_free( indextype + i );
+        MPI_Type_free( &( indextype[i] ) );
     }
 
     return iter;
