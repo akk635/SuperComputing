@@ -80,7 +80,15 @@ int main( int argc, char *argv[] ) {
     int elemcount = 0;
     int local_int_cells = 0;
 
+    int writing_proc = 0;
+
     /********** START INITIALIZATION **********/
+    long long startusec, endusec;
+    
+    MPI_Barrier( MPI_COMM_WORLD );
+    if ( my_rank == writing_proc ) {
+        startusec = PAPI_get_real_usec();
+    }
     // read-in the input file
     int init_status = initialization( file_in, part_type, &nintci, &nintcf, &nextci, &nextcf, &lcc,
                                       &bs, &be, &bn, &bw, &bl, &bh, &bp, &su, &points_count,
@@ -98,21 +106,25 @@ int main( int argc, char *argv[] ) {
     sprintf( file_vtk_out, "%s_cgup.vtk", out_prefix );
 
     // Implement this function in test_functions.c and call it here
-    int writing_proc = 0;
     /*    test_distribution( file_in, file_vtk_out, local_global_index, global_local_index, nintci,
      nintcf, points_count, points, elems, local_int_cells, cgup, elemcount,
      writing_proc );*/
 
     // Implement this function in test_functions.c and call it here
-    test_communication( file_in, file_vtk_out, local_global_index, nintci, nintcf, points_count,
+    /*test_communication( file_in, file_vtk_out, local_global_index, nintci, nintcf, points_count,
                         points, elems, local_int_cells, send_count, send_list, recv_count,
-                        recv_list, writing_proc );
-
-    /********** END INITIALIZATION **********/
+                        recv_list, writing_proc );*/
     MPI_Barrier( MPI_COMM_WORLD );
+    if ( my_rank == writing_proc ) {
+        endusec = PAPI_get_real_usec();
+        printf( "Execution time in microseconds for the initialization: %lld \n",
+               endusec - startusec );
+    }
+    /********** END INITIALIZATION **********/
+    
     /********** START COMPUTATIONAL LOOP **********/
-    long long startusec, endusec;
-    if ( my_rank == 0 ) {
+    MPI_Barrier( MPI_COMM_WORLD );
+    if ( my_rank == writing_proc ) {
         startusec = PAPI_get_real_usec();
     }
     int total_iters = compute_solution( max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
@@ -120,20 +132,29 @@ int main( int argc, char *argv[] ) {
                                         local_global_index, global_local_index, neighbors_count,
                                         send_count, send_list, recv_count, recv_list, elemcount,
                                         local_int_cells );
-    /********** END COMPUTATIONAL LOOP **********/
     MPI_Barrier( MPI_COMM_WORLD );
-    if ( my_rank == 0 ) {
+    if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        printf( "Execution time in microseconds for the initialisation: %lld \n",
-                endusec - startusec );
+        printf( "Execution time in microseconds for the computation: %lld \n",
+               endusec - startusec );
     }
+    /********** END COMPUTATIONAL LOOP **********/
 
     /********** START FINALIZATION **********/
+    MPI_Barrier( MPI_COMM_WORLD );
+    if ( my_rank == writing_proc ) {
+        startusec = PAPI_get_real_usec();
+    }
     /*finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
                   points, elems, var, cgup, su );*/
+    MPI_Barrier( MPI_COMM_WORLD );
+    if ( my_rank == writing_proc ) {
+        endusec = PAPI_get_real_usec();
+        printf( "Execution time in microseconds for the finalization: %lld \n",
+               endusec - startusec );
+    }
     /********** END FINALIZATION **********/
 
-    printf( "I am out of maze \n" );
     free( cnorm );
     free( var );
     free( cgup );

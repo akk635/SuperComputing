@@ -80,7 +80,6 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         last_send[i] = -1;
     }
 
-    printf( "working \n" );
     // Temporary counts just for the allocation
     /*    int *neighbors = calloc( nproc, sizeof(int) );
      // Provides with the max size of the array
@@ -97,7 +96,6 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
 #define match( rank, index, list ) \
         (list[rank]) == (index) ? (int)1 : (int)0
 
-    printf( "true : %d \n", match( my_rank, 0, last_send ) );
 
     // For the actual count
     ( *recv_count ) = (int *) calloc( nproc, sizeof(int) );
@@ -209,7 +207,6 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     MPI_Barrier( MPI_COMM_WORLD );
 
     counter_int_cells = counter_int_cells + ( *nintci );
-    printf( "no dead lock \n" );
     // Freeing the buffers
     for ( int i = 0; i < nproc; i++ ) {
         free( index_send_list[i] );
