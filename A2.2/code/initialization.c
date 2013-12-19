@@ -26,7 +26,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     int my_rank, nproc;
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );
-    MPI_Status *status;
+    MPI_Status status[2*nproc];
     MPI_Request request[2 * nproc];
 
     // read-in the input file
@@ -81,17 +81,6 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     }
 
     printf( "working \n" );
-    // Temporary counts just for the allocation
-    /*    int *neighbors = calloc( nproc, sizeof(int) );
-     // Provides with the max size of the array
-     for ( int i = 0; i < ( *local_int_cells ); i++ ) {
-     for ( int j = 0; j < 6; j++ ) {
-     // Only appending the internal cells
-     if ( ( temp_rank = ( *global_local_index )[( *lcc )[i][j]][0] ) != my_rank ) {
-     neighbors[temp_rank] += 1;
-     }
-     }
-     }*/
 
     // macro for counting the send_count
 #define match( rank, index, list ) \
@@ -183,7 +172,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
             MPI_Isend( &( index_send_list[i][0] ), ( *send_count )[i], MPI_INT, i, i + my_rank,
             MPI_COMM_WORLD,
-                       request + i );
+            &(request[i]) );
 
             /*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
              ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, &status );*/
@@ -193,15 +182,15 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
              MPI_COMM_WORLD, status + i );*/
             // MPI_Irecv(buffer,count,type,source,tag,comm,request)
             MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank + i, MPI_COMM_WORLD,
-                       nproc + request + i );
+                       &(request[nproc+i]) );
 
         }
     }
 
     for ( int i = 0; i < nproc; i++ ) {
         if ( ( *send_count )[i] > 0 ) {
-            MPI_Wait( request + i, status );
-            MPI_Wait( nproc + request + i, status );
+            MPI_Wait( &(request[i]), &(status[i]));
+            MPI_Wait( &(request[nproc+i]), &(status[nproc+i]));
         }
     }
 
