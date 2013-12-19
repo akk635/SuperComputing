@@ -24,7 +24,7 @@ module load papi
 
 for i in 2 4 6 8
 do
-mpiexec -n ${i} ../data/cojack.geo.bin drall_metis_${i} dual 
+mpiexec -n ${i} ../data/cojack.geo.bin cojack_metis_${i} dual 
 done
 ##mpiexec -n 1 ./gccg ../data/cojack.geo.bin drall_classic_1
 ##mpiexec -n 2 ./gccg  ../data/cojack.geo.bin drall_metis_2 dual
