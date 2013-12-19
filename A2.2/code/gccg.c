@@ -124,7 +124,7 @@ int main( int argc, char *argv[] ) {
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == 0 ) {
         endusec = PAPI_get_real_usec();
-        printf( "Execution time in microseconds for the initialisation: %lld \n",
+        printf( "For %s in microsec: %lld \n",out_prefix
                 endusec - startusec );
     }
 
@@ -132,8 +132,6 @@ int main( int argc, char *argv[] ) {
 /*    finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
                   points, elems, var, cgup, su );*/
     /********** END FINALIZATION **********/
-
-    printf( "I am out of maze \n" );
 
     free( cnorm );
     free( var );
