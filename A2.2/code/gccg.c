@@ -134,7 +134,7 @@ int main( int argc, char *argv[] ) {
     /********** END FINALIZATION **********/
 
     printf( "I am out of maze \n" );
-    /*    free( cnorm );
+        free( cnorm );
      free( var );
      free( cgup );
      free( su );
@@ -161,7 +161,7 @@ int main( int argc, char *argv[] ) {
 
      for ( int i = nintci; i <= nextcf; i++ ) {
      free( global_local_index[i] );
-     }*/
+     }
 
     MPI_Finalize();    /// cleanup MPI
 
