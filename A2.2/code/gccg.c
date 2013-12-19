@@ -187,8 +187,9 @@ int main( int argc, char *argv[] ) {
     for ( int i = nintci; i <= nextcf; i++ ) {
         free( global_local_index[i] );
     }
-
+    free( csv_file );
     MPI_Finalize();    /// cleanup MPI
+    fclose( csv_fp );
 
     return 0;
 }
