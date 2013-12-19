@@ -90,8 +90,11 @@ void finalization( char* file_in, char* out_prefix, int total_iters, double resi
         free( data_values_var );
         free( temp_elems );
         free( temp_loc_glo_index );
-        free( temp_data_values_cgup );
-        free( temp_data_values_var );
+        if( nproc != 1){
+            free( temp_data_values_cgup );
+            free( temp_data_values_var );
+        }
+
     } else {
         // MPI_Send (&buf,count,datatype,dest,tag,comm)
         MPI_Send( &local_int_cells, 1, MPI_INT, writing_proc, my_rank, MPI_COMM_WORLD );

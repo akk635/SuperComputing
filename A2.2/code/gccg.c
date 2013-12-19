@@ -86,8 +86,10 @@ int main( int argc, char *argv[] ) {
     long long startusec, endusec;
 
     char *csv_file = malloc( sizeof(char) * 30 );
-    FILE *csv_fp = fopen( strcat( csv_file, out_prefix ), "w" );
+    csv_file = strcpy( csv_file, out_prefix );
+    FILE *csv_fp = fopen( strcat( csv_file, ".csv" ), "w" );
     fprintf( csv_fp, "Init \t Compute \t Final \n" );
+    free( csv_file );
 
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
@@ -187,7 +189,7 @@ int main( int argc, char *argv[] ) {
     for ( int i = nintci; i <= nextcf; i++ ) {
         free( global_local_index[i] );
     }
-    free( csv_file );
+
     MPI_Finalize();    /// cleanup MPI
     fclose( csv_fp );
 
