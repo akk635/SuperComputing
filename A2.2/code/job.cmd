@@ -11,11 +11,11 @@
 #@ node = 4
 #@ total_tasks = 8 
 #@ node_usage = not_shared
-#@ initialdir = /home/hpc/h039v/di68goz/A2.2/code
+#@ initialdir = /home/hpc/h039v/h039vaq/SuperComputing/A2.2/code 
 #@ output = job$(jobid).out
 #@ error = job$(jobid).err
 #@ notification = always
-#@ notify_user = ga39kax@mytum.de
+#@ notify_user = ga46laz@mytum.de
 #@ queue
 . /etc/profile
 . /etc/profile.d/modules.sh
