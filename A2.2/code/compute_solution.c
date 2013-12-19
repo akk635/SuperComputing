@@ -34,7 +34,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );
     MPI_Request request[2 * nproc];
-    MPI_Status status[nproc];
+    MPI_Status *status;
 
     int **blocklengths;
     blocklengths = (int **) malloc( nproc * sizeof(int *) );
@@ -117,8 +117,10 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
             if ( send_count[i] > 0 ) {
                 // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
                 MPI_Isend( direc1, 1, indextype[i], i, i + my_rank, MPI_COMM_WORLD, request + i );
-                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank + i, MPI_COMM_WORLD,
-                          status + i );
+
+                // MPI_Irecv(buffer,count,type,source,tag,comm,request)
+                MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank + i,
+                           MPI_COMM_WORLD, nproc + request + i );
             }
         }
 
@@ -136,14 +138,12 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
          }
          */
 
-        /*
-         for ( int i = 0; i < nproc; i++ ) {
-         if ( i != my_rank ) {
-         MPI_Wait( request + i, status + i );
-         MPI_Wait( nproc + request + i, status + i );
-         }
-         }
-         */
+        for ( int i = 0; i < nproc; i++ ) {
+            if ( ( send_count[i] ) > 0 ) {
+                MPI_Wait( request + i, status + i );
+                MPI_Wait( nproc + request + i, status + i );
+            }
+        }
 
         // compute new guess (approximation) for direc
         for ( nc = 0; nc < local_int_cells; nc++ ) {
