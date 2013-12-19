@@ -169,27 +169,29 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     for ( int i = 0; i < nproc; i++ ) {
         if ( ( *send_count )[i] > 0 ) {
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
-            MPI_Isend( &(index_send_list[i][0]), ( *send_count )[i], MPI_INT, i, i, MPI_COMM_WORLD,
-                       request + i );
+            MPI_Isend( &( index_send_list[i][0] ), ( *send_count )[i], MPI_INT, i, i + my_rank,
+                       MPI_COMM_WORLD, request + i );
 
             /*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
              ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, &status );*/
 
             // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            /*            MPI_Recv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
-             status + i );*/
+            MPI_Recv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank + i, MPI_COMM_WORLD,
+                      status + i );
             // MPI_Irecv(buffer,count,type,source,tag,comm,request)
-            MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
-                       nproc + request + i );
+            /*
+             MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD,
+             nproc + request + i );
+             */
         }
     }
 
-    for ( int i = 0; i < nproc; i++ ) {
-        if ( i != my_rank ) {
-            MPI_Wait( request + i, status );
-            MPI_Wait( nproc + request + i, status );
-        }
-    }
+    /*    for ( int i = 0; i < nproc; i++ ) {
+     if ( i != my_rank ) {
+     MPI_Wait( request + i, status );
+     MPI_Wait( nproc + request + i, status );
+     }
+     }*/
 
     MPI_Barrier( MPI_COMM_WORLD );
 

@@ -106,10 +106,13 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
         for ( int i = 0; i < nproc; i++ ) {
             if ( send_count[i] > 0 ) {
                 // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
-                MPI_Isend( direc1, 1, indextype[i], i, i, MPI_COMM_WORLD, request + i );
+                MPI_Isend( direc1, 1, indextype[i], i, i + my_rank, MPI_COMM_WORLD, request + i );
+                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank + i, MPI_COMM_WORLD,
+                          status + i );
             }
         }
 
+/*
         for ( int i = 0; i < nproc; i++ ) {
             if ( recv_count[i] > 0 ) {
                 // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
@@ -117,10 +120,11 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
                 MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
                           status + i );
                 // MPI_Irecv(buffer,count,type,source,tag,comm,request)
-/*                MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
-                          nproc + request + i );*/
+                MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
+                          nproc + request + i );
             }
         }
+*/
 
 /*
         for ( int i = 0; i < nproc; i++ ) {
