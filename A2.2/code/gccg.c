@@ -124,13 +124,12 @@ int main( int argc, char *argv[] ) {
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == 0 ) {
         endusec = PAPI_get_real_usec();
-        printf( "For %s in microsec: %lld \n",out_prefix
-                endusec - startusec );
+        printf( "For %s in microsec: %lld \n", out_prefix, ( endusec - startusec ) );
     }
 
     /********** START FINALIZATION **********/
-/*    finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
-                  points, elems, var, cgup, su );*/
+    /*    finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
+     points, elems, var, cgup, su );*/
     /********** END FINALIZATION **********/
 
     free( cnorm );
@@ -161,7 +160,6 @@ int main( int argc, char *argv[] ) {
     for ( int i = nintci; i <= nextcf; i++ ) {
         free( global_local_index[i] );
     }
-
 
     MPI_Finalize();    /// cleanup MPI
 
