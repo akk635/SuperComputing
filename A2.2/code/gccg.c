@@ -84,7 +84,7 @@ int main( int argc, char *argv[] ) {
 
     /********** START INITIALIZATION **********/
     long long startusec, endusec;
-    
+
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         startusec = PAPI_get_real_usec();
@@ -103,7 +103,7 @@ int main( int argc, char *argv[] ) {
     }
 
     /*char file_vtk_out[100];
-    sprintf( file_vtk_out, "%s_cgup.vtk", out_prefix );*/
+     sprintf( file_vtk_out, "%s_cgup.vtk", out_prefix );*/
 
     // Implement this function in test_functions.c and call it here
     /*    test_distribution( file_in, file_vtk_out, local_global_index, global_local_index, nintci,
@@ -112,16 +112,15 @@ int main( int argc, char *argv[] ) {
 
     // Implement this function in test_functions.c and call it here
     /*test_communication( file_in, file_vtk_out, local_global_index, nintci, nintcf, points_count,
-                        points, elems, local_int_cells, send_count, send_list, recv_count,
-                        recv_list, writing_proc );*/
+     points, elems, local_int_cells, send_count, send_list, recv_count,
+     recv_list, writing_proc );*/
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        printf( "Execution time in microseconds for the initialization: %lld \n",
-               endusec - startusec );
+        printf( "For %s Intialisation time in microsec: %lld \n", out_prefix, (endusec - startusec) );
     }
     /********** END INITIALIZATION **********/
-    
+
     /********** START COMPUTATIONAL LOOP **********/
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
@@ -135,8 +134,7 @@ int main( int argc, char *argv[] ) {
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        printf( "Execution time in microseconds for the computation: %lld \n",
-               endusec - startusec );
+        printf( "For %s Computation time in microsec: %lld \n", out_prefix, (endusec - startusec) );
     }
     /********** END COMPUTATIONAL LOOP **********/
 
@@ -146,15 +144,14 @@ int main( int argc, char *argv[] ) {
         startusec = PAPI_get_real_usec();
     }
 
-    finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
+/*    finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
                   points, elems, var, cgup, su, local_global_index, local_int_cells, elemcount,
-                  writing_proc );
+                  writing_proc );*/
 
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        printf( "Execution time in microseconds for the finalization: %lld \n",
-               endusec - startusec );
+        printf( "For %s Finalisation time in microsec: %lld \n", out_prefix, (endusec - startusec) );
     }
     /********** END FINALIZATION **********/
 
