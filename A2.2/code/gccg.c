@@ -85,6 +85,10 @@ int main( int argc, char *argv[] ) {
     /********** START INITIALIZATION **********/
     long long startusec, endusec;
 
+    char *csv_file = malloc( sizeof(char) * 30 );
+    FILE *csv_fp = fopen( strcat( csv_file, out_prefix ), "w" );
+    fprintf( csv_fp, "Init \t Compute \t Final \n" );
+
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         startusec = PAPI_get_real_usec();
@@ -117,7 +121,7 @@ int main( int argc, char *argv[] ) {
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        printf( "For %s Intialisation time in microsec: %lld \n", out_prefix, (endusec - startusec) );
+        fprinf(csv_fp, "%lld \t", (endusec - startusec));
     }
     /********** END INITIALIZATION **********/
 
@@ -134,7 +138,7 @@ int main( int argc, char *argv[] ) {
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        printf( "For %s Computation time in microsec: %lld \n", out_prefix, (endusec - startusec) );
+        fprinf(csv_fp, "%lld \t", (endusec - startusec));
     }
     /********** END COMPUTATIONAL LOOP **********/
 
@@ -144,14 +148,14 @@ int main( int argc, char *argv[] ) {
         startusec = PAPI_get_real_usec();
     }
 
-/*    finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
+    finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
                   points, elems, var, cgup, su, local_global_index, local_int_cells, elemcount,
-                  writing_proc );*/
+                  writing_proc );
 
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        printf( "For %s Finalisation time in microsec: %lld \n", out_prefix, (endusec - startusec) );
+        fprinf(csv_fp, "%lld \n", (endusec - startusec));
     }
     /********** END FINALIZATION **********/
 
