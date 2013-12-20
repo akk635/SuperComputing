@@ -12,7 +12,8 @@
 #include <assert.h>
 #include <papi.h>
 
-double getRecv( int global_index, double **recv_buffer, int **recv_list, int temp_rank, int *count );
+double getRecv( int global_index, double **recv_buffer, int **recv_list, int temp_rank,
+                int *count );
 int compar( const void *, const void * );
 
 int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, int** lcc,
@@ -34,7 +35,7 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );
     MPI_Request request[2 * nproc];
-    MPI_Status status[2*nproc];
+    MPI_Status status[2 * nproc];
 
     int **blocklengths;
     blocklengths = (int **) malloc( nproc * sizeof(int *) );
@@ -69,7 +70,6 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
         } else {
             ( recv_buffer )[i] = (double*) calloc( 1, sizeof(double) );
         }
-
     }
 
 #define solve(global_index) \
@@ -116,14 +116,16 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
         for ( int i = 0; i < nproc; i++ ) {
             if ( send_count[i] > 0 ) {
                 // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
-                MPI_Isend( direc1, 1, indextype[i], i, i + my_rank, MPI_COMM_WORLD, &(request[i]) );
+                MPI_Isend( direc1, 1, indextype[i], i, i + my_rank, MPI_COMM_WORLD,
+                           &( request[i] ) );
 
                 // Blocked until exact values are received at the application buffer
-/*                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank + i, MPI_COMM_WORLD,
-                status );*/
+                /*                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank + i, MPI_COMM_WORLD,
+                 status );*/
                 // MPI_Irecv(buffer,count,type,source,tag,comm,request)
                 MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank + i,
-                           MPI_COMM_WORLD, &(request[nproc+i]));
+                MPI_COMM_WORLD,
+                           &( request[nproc + i] ) );
             }
         }
 
@@ -143,8 +145,8 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
 
         for ( int i = 0; i < nproc; i++ ) {
             if ( ( send_count[i] ) > 0 ) {
-                MPI_Wait( &(request[i]), &(status[nproc+i])  );
-                MPI_Wait( &(request[nproc+i]), &(status[nproc+i])  );
+                MPI_Wait( &( request[i] ), &( status[nproc + i] ) );
+                MPI_Wait( &( request[nproc + i] ), &( status[nproc + i] ) );
             }
         }
 
@@ -278,7 +280,8 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     return iter;
 }
 
-double getRecv( int global_index, double **recv_buffer, int **recv_list, int temp_rank, int *count ) {
+double getRecv( int global_index, double **recv_buffer, int **recv_list, int temp_rank,
+                int *count ) {
     const int *temp_pointer = &global_index;
     const int* base = recv_list[temp_rank];
     int arraysize = count[temp_rank];

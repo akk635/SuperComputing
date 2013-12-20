@@ -6,17 +6,16 @@
  */
 
 #include <stdio.h>
-#include "util_write_files.h"
 #include <stdlib.h>
 #include <mpi.h>
+#include "util_write_files.h"
 
 void finalization( char* file_in, char* out_prefix, int total_iters, double residual_ratio,
                    int nintci, int nintcf, int points_count, int** points, int* elems, double* var,
-                   double* cgup, double* su, int *local_global_index,int local_int_cells,
+                   double* cgup, double* su, int *local_global_index, int local_int_cells,
                    int elemcount, int writing_proc ) {
-
     char file_out[100];
-    sprintf(file_out, "%s_summary.out", out_prefix);
+    sprintf( file_out, "%s_summary.out", out_prefix );
 
     MPI_Status stat;
     int my_rank, nproc;
@@ -50,8 +49,7 @@ void finalization( char* file_in, char* out_prefix, int total_iters, double resi
                 // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
                 MPI_Recv( &proc_loc_int_size, 1, MPI_INT, i, i, MPI_COMM_WORLD, &stat );
                 temp_elems = (int *) malloc( proc_loc_int_size * 8 * sizeof(int) );
-                MPI_Recv( temp_elems, proc_loc_int_size * 8, MPI_INT, i, i, MPI_COMM_WORLD,
-                          &stat );
+                MPI_Recv( temp_elems, proc_loc_int_size * 8, MPI_INT, i, i, MPI_COMM_WORLD, &stat );
 
                 // Now where to place indices
                 temp_loc_glo_index = (int *) malloc( proc_loc_int_size * sizeof(int) );
@@ -59,8 +57,8 @@ void finalization( char* file_in, char* out_prefix, int total_iters, double resi
                           &stat );
 
                 temp_data_values_cgup = (double *) malloc( proc_loc_int_size * sizeof(double) );
-                MPI_Recv( temp_data_values_cgup, proc_loc_int_size, MPI_DOUBLE, i, i, MPI_COMM_WORLD,
-                          &stat );
+                MPI_Recv( temp_data_values_cgup, proc_loc_int_size, MPI_DOUBLE, i, i,
+                          MPI_COMM_WORLD, &stat );
 
                 temp_data_values_var = (double *) malloc( proc_loc_int_size * sizeof(double) );
                 MPI_Recv( temp_data_values_var, proc_loc_int_size, MPI_DOUBLE, i, i, MPI_COMM_WORLD,
@@ -77,20 +75,21 @@ void finalization( char* file_in, char* out_prefix, int total_iters, double resi
             }
         }
 
-        int status = store_simulation_stats(file_in, file_out, nintci, nintcf, data_values_var,
-                                            total_iters, residual_ratio );
-        sprintf(file_out, "%s_data.vtk", out_prefix);
+        int status = store_simulation_stats( file_in, file_out, nintci, nintcf, data_values_var,
+                                             total_iters, residual_ratio );
+        sprintf( file_out, "%s_data.vtk", out_prefix );
         vtk_write_unstr_grid_header( file_in, file_out, nintci, nintcf, points_count, points,
                                      global_elems );
         vtk_append_double( file_out, "CGUP", nintci, nintcf, data_values_cgup );
-        if ( status != 0 ) fprintf(stderr, "Error when trying to write to file %s\n", file_out);
+        if ( status != 0 )
+            fprintf( stderr, "Error when trying to write to file %s\n", file_out );
 
         free( global_elems );
         free( data_values_cgup );
         free( data_values_var );
         free( temp_elems );
         free( temp_loc_glo_index );
-        if( nproc != 1){
+        if ( nproc != 1 ) {
             free( temp_data_values_cgup );
             free( temp_data_values_var );
         }
@@ -100,9 +99,8 @@ void finalization( char* file_in, char* out_prefix, int total_iters, double resi
         MPI_Send( &local_int_cells, 1, MPI_INT, writing_proc, my_rank, MPI_COMM_WORLD );
         MPI_Send( elems, local_int_cells * 8, MPI_INT, writing_proc, my_rank, MPI_COMM_WORLD );
         MPI_Send( local_global_index, local_int_cells, MPI_INT, writing_proc, my_rank,
-                  MPI_COMM_WORLD );
+        MPI_COMM_WORLD );
         MPI_Send( cgup, local_int_cells, MPI_DOUBLE, writing_proc, my_rank, MPI_COMM_WORLD );
         MPI_Send( var, local_int_cells, MPI_DOUBLE, writing_proc, my_rank, MPI_COMM_WORLD );
     }
-
 }

@@ -123,7 +123,7 @@ int main( int argc, char *argv[] ) {
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        fprintf(csv_fp, "%lld \t", (endusec - startusec));
+        fprintf( csv_fp, "%lld \t", ( endusec - startusec ) );
     }
     /********** END INITIALIZATION **********/
 
@@ -140,7 +140,7 @@ int main( int argc, char *argv[] ) {
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        fprintf(csv_fp, "%lld \t", (endusec - startusec));
+        fprintf( csv_fp, "%lld \t", ( endusec - startusec ) );
     }
     /********** END COMPUTATIONAL LOOP **********/
 
@@ -157,7 +157,7 @@ int main( int argc, char *argv[] ) {
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
-        fprintf(csv_fp, "%lld \n", (endusec - startusec));
+        fprintf( csv_fp, "%lld \n", ( endusec - startusec ) );
     }
     /********** END FINALIZATION **********/
 

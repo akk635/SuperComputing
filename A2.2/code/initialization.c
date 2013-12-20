@@ -26,7 +26,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     int my_rank, nproc;
     MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );
-    MPI_Status status[2*nproc];
+    MPI_Status status[2 * nproc];
     MPI_Request request[2 * nproc];
 
     // read-in the input file
@@ -103,9 +103,9 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         }
     }
 
-/*    if ( my_rank == 1 ) {
-        printf( " send_count : %d \n", ( *send_count )[0] );
-    }*/
+    /*    if ( my_rank == 1 ) {
+     printf( " send_count : %d \n", ( *send_count )[0] );
+     }*/
 
     ( *send_list ) = (int **) malloc( nproc * sizeof(int *) );
     // Allocating with the max array size
@@ -168,7 +168,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
             MPI_Isend( &( index_send_list[i][0] ), ( *send_count )[i], MPI_INT, i, i + my_rank,
             MPI_COMM_WORLD,
-            &(request[i]) );
+                       &( request[i] ) );
 
             /*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
              ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, &status );*/
@@ -177,16 +177,15 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
             /*            MPI_Recv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank + i,
              MPI_COMM_WORLD, status + i );*/
             // MPI_Irecv(buffer,count,type,source,tag,comm,request)
-            MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank + i, MPI_COMM_WORLD,
-                       &(request[nproc+i]) );
-
+            MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank + i,
+                       MPI_COMM_WORLD, &( request[nproc + i] ) );
         }
     }
 
     for ( int i = 0; i < nproc; i++ ) {
         if ( ( *send_count )[i] > 0 ) {
-            MPI_Wait( &(request[i]), &(status[i]));
-            MPI_Wait( &(request[nproc+i]), &(status[nproc+i]));
+            MPI_Wait( &( request[i] ), &( status[i] ) );
+            MPI_Wait( &( request[nproc + i] ), &( status[nproc + i] ) );
         }
     }
 
@@ -203,14 +202,4 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     return 0;
 }
 
-/*
- int contains( int index, int *search_array, int size ) {
- for ( int i = size - 1; i >= 0; i-- ) {
- if ( search_array[i] == index ) {
- return 1;
- }
- }
- return 0;
- }
- */
 
