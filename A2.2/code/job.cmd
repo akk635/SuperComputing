@@ -1,17 +1,17 @@
- #!/bin/bash
+#!/bin/bash
 ##
 ## This script runs all the tests for the Firebenchmark, modifying the
-## makefile to change between the optimization flags 
+## makefile to change between the optimization flags
 ##
 #@ job_name = Team12_mytest_A2.3
-#@ job_type = parallel
+#@ job_type = MPICH
 #@ class = test
 #@ wall_clock_limit = 01:20:00
 #@ island_count = 1
-#@ node = 4
-#@ total_tasks = 8 
-#@ node_usage = not_shared
-#@ initialdir = /home/hpc/h039v/h039vaq/SuperComputing/A2.2/code 
+#@ node = 1
+#@ total_tasks = 17
+#@ network.MPI = sn_all,not_shared,us
+#@ initialdir = /home/hpc/h039v/h039vaq/SuperComputing/A2.2/code
 #@ output = job$(jobid).out
 #@ error = job$(jobid).err
 #@ notification = always
@@ -19,20 +19,18 @@
 #@ queue
 . /etc/profile
 . /etc/profile.d/modules.sh
+module unload mpi.ibm
+module load mpi.intel
 module load metis
 module load papi
-
+export SUBJOB
 for i in 2 4 6 8
 do
-mpiexec -n ${i} ../data/cojack.geo.bin cojack_metis_${i} dual 
+  export SUBJOB=${i}
+L1 = $( 1)
+L2 = $($i)
+sed -n -e "${L1},${L2}p" $LOADL_HOSTFILE
+mpiexec -n ${i} ./gccg ../data/cojack.geo.bin cojack_metis_${i} dual
 done
-##mpiexec -n 1 ./gccg ../data/cojack.geo.bin drall_classic_1
-##mpiexec -n 2 ./gccg  ../data/cojack.geo.bin drall_metis_2 dual
-##mpiexec -n 3 ./gccg  ../data/cojack.geo.bin drall_metis_3 dual
-##mpiexec -n 4 ./gccg  ../data/cojack.geo.bin drall_metis_4 dual
-##mpiexec -n 5 ./gccg  ../data/cojack.geo.bin drall_metis_5 dual
-##mpiexec -n 6 ./gccg  ../data/cojack.geo.bin drall_metis_6 dual
-##mpiexec -n 7 ./gccg  ../data/cojack.geo.bin drall_metis_7 dual
-##mpiexec -n 8 ./gccg  ../data/cojack.geo.bin drall_metis_8 dual
-
+wait
 
