@@ -11,11 +11,11 @@
 #@ node = 4
 #@ total_tasks = 16
 #@ network.MPI = sn_all,not_shared,us
-#@ initialdir = /home/hpc/h039v/h039vaq/SuperComputing/A2.2/code
+#@ initialdir = /home/hpc/h039v/di68goz/A2.3/code
 #@ output = job$(jobid).out
 #@ error = job$(jobid).err
 #@ notification = always
-#@ notify_user = ga46laz@mytum.de
+#@ notify_user = ga39kax@mytum.de
 #@ queue
 . /etc/profile
 . /etc/profile.d/modules.sh
@@ -24,12 +24,15 @@ module load mpi.intel
 module load metis
 module load papi
 export SUBJOB
-for i in 2 4 6 8
+for i in 1 2 4 6 8
 do
   export SUBJOB=${i}
 L1 = $( 1)
 L2 = $(16)
 sed -n -e "${L1},${L2}p" $LOADL_HOSTFILE
-mpiexec -n ${i} ./gccg ../data/cojack.geo.bin cojack_metis_${i} dual
+mpiexec -n ${i} ./gccg ./cojack.geo.bin cojack_classic_${i}
+mpiexec -n ${i} ./gccg ./cojack.geo.bin cojack_metis_${i} dual
+mpiexec -n ${i} ./gccg ./pent.geo.bin pent_classic_${i}
+mpiexec -n ${i} ./gccg ./pent.geo.bin pent_metis_${i} dual
 done
 wait

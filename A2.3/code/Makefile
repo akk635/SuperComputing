@@ -32,4 +32,4 @@ $(LIBPOS) : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $+
 
 clean:
-	rm -rf *.o gccg $(LIBPOS) *.vtk *.dSYM
+	rm -rf *.o gccg $(LIBPOS) *.vtk *.dSYM *.out *.err *.csv
