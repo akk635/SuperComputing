@@ -115,33 +115,17 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
         // Communication of the neighbors values
         for ( int i = 0; i < nproc; i++ ) {
             if ( send_count[i] > 0 ) {
-                // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
-                MPI_Isend( direc1, 1, indextype[i], i, i + my_rank, MPI_COMM_WORLD,
-                           &( request[i] ) );
 
-                // Blocked until exact values are received at the application buffer
-                /*                MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank + i, MPI_COMM_WORLD,
-                 status );*/
                 // MPI_Irecv(buffer,count,type,source,tag,comm,request)
                 MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank + i,
                 MPI_COMM_WORLD,
                            &( request[nproc + i] ) );
+
+                // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
+                MPI_Isend( direc1, 1, indextype[i], i, i + my_rank, MPI_COMM_WORLD,
+                           &( request[i] ) );
             }
         }
-
-        /*
-         for ( int i = 0; i < nproc; i++ ) {
-         if ( recv_count[i] > 0 ) {
-         // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-         // Blocked until exact values are received at the application buffer
-         MPI_Recv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
-         status + i );
-         // MPI_Irecv(buffer,count,type,source,tag,comm,request)
-         MPI_Irecv( recv_buffer[i], recv_count[i], MPI_DOUBLE, i, my_rank, MPI_COMM_WORLD,
-         nproc + request + i );
-         }
-         }
-         */
 
         for ( int i = 0; i < nproc; i++ ) {
             if ( ( send_count[i] ) > 0 ) {

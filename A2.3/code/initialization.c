@@ -165,27 +165,14 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     // source, recvtag, comm, &status );
     for ( int i = 0; i < nproc; i++ ) {
         if ( ( *send_count )[i] > 0 ) {
+            // MPI_Irecv(buffer,count,type,source,tag,comm,request)
+            MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank + i,
+                       MPI_COMM_WORLD, &( request[nproc + i] ) );
+
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
             MPI_Isend( &( index_send_list[i][0] ), ( *send_count )[i], MPI_INT, i, i + my_rank,
             MPI_COMM_WORLD,
                        &( request[i] ) );
-
-            /*            MPI_Sendrecv( index_send_list[i], ( *send_count )[i], MPI_INT, i, i, recv_list[i],
-             ( *recv_count )[i], MPI_INT, i, my_rank, MPI_COMM_WORLD, &status );*/
-
-            // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            /*            MPI_Recv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank + i,
-             MPI_COMM_WORLD, status + i );*/
-            // MPI_Irecv(buffer,count,type,source,tag,comm,request)
-            MPI_Irecv( ( *recv_list )[i], ( *recv_count )[i], MPI_INT, i, my_rank + i,
-                       MPI_COMM_WORLD, &( request[nproc + i] ) );
-        }
-    }
-
-    for ( int i = 0; i < nproc; i++ ) {
-        if ( ( *send_count )[i] > 0 ) {
-            MPI_Wait( &( request[i] ), &( status[i] ) );
-            MPI_Wait( &( request[nproc + i] ), &( status[nproc + i] ) );
         }
     }
 
@@ -199,6 +186,12 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
     free( counter_int_cells );
     free( last_send );
 
+    for ( int i = 0; i < nproc; i++ ) {
+        if ( ( *send_count )[i] > 0 ) {
+            MPI_Wait( &( request[i] ), &( status[i] ) );
+            MPI_Wait( &( request[nproc + i] ), &( status[nproc + i] ) );
+        }
+    }
     return 0;
 }
 

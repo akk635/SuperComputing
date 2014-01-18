@@ -217,8 +217,8 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
 
             idx_t ne = *NINTCF - *NINTCI + 1;
             idx_t nn = *points_count;
-            idx_t *eptr =NULL;
-            idx_t *eind= NULL;
+            idx_t *eptr = NULL;
+            idx_t *eind = NULL;
             idx_t *vwgt = NULL;
             idx_t *vsize = NULL;
             idx_t ncommon = 4;
@@ -468,15 +468,15 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
 
     // read geometry i.e nodes
     // allocate elems
-    if ( ( *elems = (int*) malloc( ( *local_int_cells ) * 8 * sizeof(int) ) ) == NULL ) {
+    if ( ( *elems = (int*) malloc( ( *NINTCF - *NINTCI + 1 ) * 8 * sizeof(int) ) ) == NULL ) {
         fprintf( stderr, "malloc failed to allocate elems" );
         return -1;
     }
 
+    fseek( fp, coe_read_end, SEEK_SET);
+
     // read elems
-    for ( i = 0; i < ( *local_int_cells ); i++ ) {
-        fseek( fp, coe_read_end + ( ( *local_global_index )[i] - *NINTCI ) * 8 * sizeof(int),
-        SEEK_SET );
+    for ( i = 0; i < ( *NINTCF - *NINTCI + 1 ); i++ ) {
         for ( int j = 0; j < 8; j++ ) {
             fread( &( ( *elems )[( i * 8 ) + j] ), sizeof(int), 1, fp );
         }
@@ -484,12 +484,8 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
 
     int nodes_read_end = coe_read_end + 8 * ( *NINTCF - *NINTCI + 1 ) * sizeof(int);
 
-    if ( my_rank == check ) {
-        long int fpos = ftell( fp );
-        assert( fpos == nodes_read_end );
-    }
-
-    fseek( fp, nodes_read_end, SEEK_SET );
+    long int fpos = ftell( fp );
+    assert( fpos == nodes_read_end );
 
     fread( points_count, sizeof(int), 1, fp );
 

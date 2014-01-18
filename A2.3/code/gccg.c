@@ -120,6 +120,7 @@ int main( int argc, char *argv[] ) {
     /*test_communication( file_in, file_vtk_out, local_global_index, nintci, nintcf, points_count,
      points, elems, local_int_cells, send_count, send_list, recv_count,
      recv_list, writing_proc );*/
+
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
