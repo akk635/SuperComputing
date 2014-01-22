@@ -10,6 +10,7 @@
 #include <math.h>
 #include <mpi.h>
 #include <papi.h>
+#include "scorep/SCOREP_User.h"
 
 #include "initialization.h"
 #include "compute_solution.h"
@@ -126,6 +127,8 @@ int main( int argc, char *argv[] ) {
         endusec = PAPI_get_real_usec();
         fprintf( csv_fp, "%lld \t", ( endusec - startusec ) );
     }
+
+    SCOREP_USER_REGION_DEFINE(OA_Phase)
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
@@ -133,11 +136,13 @@ int main( int argc, char *argv[] ) {
     if ( my_rank == writing_proc ) {
         startusec = PAPI_get_real_usec();
     }
+    SCOREP_USER_OA_PHASE_BEGIN(OA_Phase,“OA_Phase", SCOREP_USER_REGION_TYPE_COMMON);
     int total_iters = compute_solution( max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
                                         be, bh, cnorm, var, su, cgup, &residual_ratio,
                                         local_global_index, global_local_index, neighbors_count,
                                         send_count, send_list, recv_count, recv_list, elemcount,
                                         local_int_cells );
+    SCOREP_USER_OA_PHASE_END(OA_Phase)
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();

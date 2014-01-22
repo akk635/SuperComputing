@@ -40,7 +40,10 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     int **blocklengths;
     blocklengths = (int **) malloc( nproc * sizeof(int *) );
     for ( int i = 0; i < nproc; i++ ) {
-        ( blocklengths )[i] = (int *) calloc( sizeof(int), send_count[i] );
+        if ( send_count[i] > 0)
+            ( blocklengths )[i] = (int *) calloc( send_count[i], sizeof(int) );
+        else
+            ( blocklengths )[i] = (int *) calloc( 1, sizeof(int) );
     }
     // Initialising with all 1's
     for ( int i = 0; i < nproc; i++ ) {

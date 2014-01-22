@@ -161,8 +161,6 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         }
     }
     // Correcting the list using communication
-    // MPI_Sendrecv( &sendbuf, sendcount, sendtype, dest, sendtag, &recvbuf, recvcount, recvtype,
-    // source, recvtag, comm, &status );
     for ( int i = 0; i < nproc; i++ ) {
         if ( ( *send_count )[i] > 0 ) {
             // MPI_Irecv(buffer,count,type,source,tag,comm,request)
