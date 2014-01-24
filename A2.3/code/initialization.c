@@ -137,7 +137,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
                 if ( !( match( temp_rank, i, last_send ) ) ) {
                     // Adding the global indices to be sent to each processor
                     last_send[temp_rank] = i;
-                    ( *send_list )[temp_rank][( counter[temp_rank] )++] = i;
+                    ( *send_list )[temp_rank][( counter[temp_rank] )++] = ( *local_global_index )[i];
                 }
             }
         }
@@ -168,7 +168,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
                        MPI_COMM_WORLD, &( request[nproc + i] ) );
 
             // MPI_Isend (&buf,count,datatype,dest,tag,comm,&request)
-            MPI_Isend( &( index_send_list[i][0] ), ( *send_count )[i], MPI_INT, i, i + my_rank,
+            MPI_Isend( ((* send_list)[i] ), ( *send_count )[i], MPI_INT, i, i + my_rank,
             MPI_COMM_WORLD,
                        &( request[i] ) );
         }
