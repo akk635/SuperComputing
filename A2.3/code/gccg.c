@@ -122,6 +122,8 @@ int main( int argc, char *argv[] ) {
      points, elems, local_int_cells, send_count, send_list, recv_count,
      recv_list, writing_proc );*/
 
+    printf("cgup : %f \n", cgup[global_local_index[my_rank][1]]);
+
     MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
@@ -149,6 +151,7 @@ int main( int argc, char *argv[] ) {
         fprintf( csv_fp, "%lld \t", ( endusec - startusec ) );
     }
     /********** END COMPUTATIONAL LOOP **********/
+    printf("cgup : %f \n", cgup[global_local_index[my_rank][1]]);
 
     /********** START FINALIZATION **********/
     MPI_Barrier( MPI_COMM_WORLD );
@@ -165,6 +168,8 @@ int main( int argc, char *argv[] ) {
         endusec = PAPI_get_real_usec();
         fprintf( csv_fp, "%lld \n", ( endusec - startusec ) );
     }
+
+    printf("cgup : %f \n", cgup[global_local_index[my_rank][1]]);
     /********** END FINALIZATION **********/
 
     free( cnorm );

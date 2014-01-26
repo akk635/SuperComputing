@@ -48,15 +48,15 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         ( *cnorm )[i] = 1.0;
     }
 
-    for ( i = 0; i < *local_int_cells; i++ ) {
+    for ( i = 0; i < (*local_int_cells); i++ ) {
         ( *var )[i] = 0.0;
     }
 
-    for ( i = 0; i < *local_int_cells; i++ ) {
+    for ( i = 0; i < (*local_int_cells); i++ ) {
         ( *cgup )[i] = 1.0 / ( ( *bp )[i] );
     }
 
-    for ( i = *local_int_cells; i < *elemcount; i++ ) {
+    for ( i = (*local_int_cells); i < (*elemcount); i++ ) {
         ( *var )[i] = 0.0;
         ( *cgup )[i] = 0.0;
         ( *bs )[i] = 0.0;
@@ -147,19 +147,6 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         assert( counter[i] == ( *send_count )[i] );
     }
 
-    int **index_send_list = (int **) malloc( nproc * sizeof(int *) );
-    // Allocating an initialising
-    for ( int i = 0; i < nproc; i++ ) {
-        if ( ( *send_count )[i] > 0 ) {
-            index_send_list[i] = (int *) malloc( ( *send_count )[i] * sizeof(int) );
-        } else {
-            index_send_list[i] = (int *) calloc( 1, sizeof(int) );
-        }
-        assert( index_send_list[i] != NULL );
-        for ( int j = 0; j < ( *send_count )[i]; j++ ) {
-            index_send_list[i][j] = ( *local_global_index )[( *send_list )[i][j]];
-        }
-    }
     // Correcting the list using communication
     for ( int i = 0; i < nproc; i++ ) {
         if ( ( *send_count )[i] > 0 ) {
@@ -176,9 +163,6 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
 
     counter_int_cells = counter_int_cells + ( *nintci );
     // Freeing the buffers
-    for ( int i = 0; i < nproc; i++ ) {
-        free( index_send_list[i] );
-    }
 
     free( counter );
     free( counter_int_cells );

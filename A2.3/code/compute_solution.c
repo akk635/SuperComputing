@@ -12,9 +12,6 @@
 #include <assert.h>
 #include <papi.h>
 
-double getRecv( int global_index, double **recv_buffer, int **recv_list, int temp_rank, int *count );
-int compar( const void *, const void * );
-
 int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, int** lcc,
                       double* bp, double* bs, double* bw, double* bl, double* bn, double* be,
                       double* bh, double* cnorm, double* var, double *su, double* cgup,
@@ -77,21 +74,6 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
         MPI_Type_commit( &( send_indextype[i] ) );
         MPI_Type_commit( &( recv_indextype[i] ) );
     }
-
-    // For receiving the communication
-    double **recv_buffer;
-    recv_buffer = (double **) malloc( nproc * sizeof(double *) );
-    for ( int i = 0; i < nproc; i++ ) {
-        if ( recv_count[i] > 0 ) {
-            ( recv_buffer )[i] = (double*) malloc( recv_count[i] * sizeof(double) );
-        } else {
-            ( recv_buffer )[i] = (double*) calloc( 1, sizeof(double) );
-        }
-    }
-
-#define solve(global_index) \
-        (global_local_index[global_index][0]) == (my_rank) ? (direc1[global_local_index[global_index][1]]) \
-                : getRecv( global_index, recv_buffer, recv_list, global_local_index[global_index][0], recv_count )
 
     /** the reference residual */
     double resref = 0.0;
@@ -280,28 +262,10 @@ int compute_solution( const int max_iters, int nintci, int nintcf, int nextcf, i
     for ( int i = 0; i < nproc; i++ ) {
         free( send_blocklengths[i] );
         free( recv_blocklengths[i] );
-        free( recv_buffer[i] );
         MPI_Type_free( &( send_indextype[i] ) );
         MPI_Type_free( &( recv_indextype[i] ) );
     }
 
     return iter;
-}
-
-double getRecv( int global_index, double **recv_buffer, int **recv_list, int temp_rank, int *count ) {
-    const int *temp_pointer = &global_index;
-    const int* base = recv_list[temp_rank];
-    int arraysize = count[temp_rank];
-    int *index = (int *) bsearch( (void *) temp_pointer, (void *) base, (size_t) arraysize,
-                                  sizeof(int), compar );
-    assert( index != NULL );
-    assert( ( index - base ) == ( (char * ) index - (char* ) base ) / sizeof(int) );
-    return recv_buffer[temp_rank][index - base];
-}
-
-int compar( const void * a, const void *b ) {
-    int *A = (int *) a;
-    int *B = (int *) b;
-    return ( *A ) == ( *B ) ? 0 : ( ( *A ) - ( *B ) );
 }
 

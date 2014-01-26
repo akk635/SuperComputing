@@ -209,7 +209,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             }
 
             // read elems
-            for ( i = ( *NINTCI ); i < ( *NINTCF + 1 ) * 8; i++ ) {
+            for ( i = ( *NINTCI ); i < ( *NINTCF - *NINTCI + 1 ) * 8; i++ ) {
                 fread( &( ( *elems )[i] ), sizeof(int), 1, fp );
             }
 
@@ -473,7 +473,7 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
         return -1;
     }
 
-    fseek( fp, coe_read_end, SEEK_SET);
+    fseek( fp, coe_read_end, SEEK_SET );
 
     // read elems
     for ( i = 0; i < ( *NINTCF - *NINTCI + 1 ); i++ ) {
@@ -509,6 +509,10 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
             fread( &( ( *points )[pointIdx][coordIdx] ), sizeof(int), 1, fp );
         }
     }
+
+    fpos = ftell( fp );
+    fseek( fp, 0, SEEK_END );
+    assert( fpos = fp );
 
     fclose( fp );
 
