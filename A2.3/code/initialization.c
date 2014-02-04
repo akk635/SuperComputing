@@ -66,6 +66,7 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         ( *bh )[i] = 0.0;
         ( *bl )[i] = 0.0;
     }
+
     int temp_rank = 0;
     // Counter for the internal domain cells for the recv_count calc
     int *counter_int_cells = (int *) calloc( ( ( *nintcf ) - ( *nintci ) + 1 ), sizeof(int) );
@@ -128,8 +129,13 @@ int initialization( char* file_in, char* part_type, int* nintci, int* nintcf, in
         }
     }
 
-    int *counter = (int *) calloc( nproc, sizeof(int) );
+    //Again re-Initialising with -1's
+    for ( int i = 0; i < nproc; i++ ) {
+        last_send[i] = -1;
+    }
 
+    int *counter = (int *) calloc( nproc, sizeof(int) );
+    int count = 0;
     for ( int i = 0; i < ( *local_int_cells ); i++ ) {
         for ( int j = 0; j < 6; j++ ) {
             // Only appending the internal cells

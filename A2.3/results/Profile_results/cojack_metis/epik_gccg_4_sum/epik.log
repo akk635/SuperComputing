@@ -1,0 +1,37 @@
+S=C=A=N: Thu Jan 30 00:07:03 2014: Collect start
+/lrz/sys/intel/mpi_41_1_036/bin64/mpiexec -n 4 ./gccg ../data/cojack.geo.bin cojack_metis_4 dual
+[00000]EPIK: Created new measurement archive ./epik_gccg_4_sum
+[00000]EPIK: Activated ./epik_gccg_4_sum [NO TRACE] (0.015s)
+[00000]EPIK: MPI-2.2 initialized 4 ranks
+cgup : 648540.726844 
+cgup : 623513.174770 
+cgup : 2694740.470009 
+cgup : 2412180.235400 
+cgup : 648540.726844 
+cgup : 623513.174770 
+cgup : 2412180.235400 
+cgup : 2694740.470009 
+cgup : 2694740.470009 
+cgup : 2412180.235400 
+cgup : 623513.174770 
+========================================
+= AVL -  Linear Equation Solver - GCCG =
+========================================
+
+Input File:  ../data/cojack.geo.bin
+Output File:  cojack_metis_4_summary.out
+No. of Active Cells:  318043
+Iterations Count: 643
+Residual Ratio: 9.887374e-11
+========================================
+
+cgup : 648540.726844 
+[00000]EPIK: Closing experiment ./epik_gccg_4_sum
+[00000]EPIK: Largest definitions buffer 10580 bytes
+[00000]EPIK: 23 unique paths (22 max paths, 3 max frames, 0 unknowns)
+[00000]EPIK: cpath[20]: rid=77 ppid=1 order=1418817.185840 OutOfOrder
+[00000]EPIK: cpath[22]: rid=113 ppid=15 order=1418817.151486 OutOfOrder
+[00000]EPIK: Unifying... done (0.005s)
+[00000]EPIK: Collating... done (0.006s)
+[00000]EPIK: Closed experiment ./epik_gccg_4_sum (0.011s) maxHeap(0)=161.566/353.637MB
+S=C=A=N: Thu Jan 30 00:07:12 2014: Collect done (status=0) 9s

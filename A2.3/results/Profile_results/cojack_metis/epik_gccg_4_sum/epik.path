@@ -1,0 +1,22 @@
+main
+ + MPI_Init
+ |  + TRACING
+ + initialization
+ |  + read_binary_geo
+ |  |  + MPI_Bcast
+ |  + MPI_Irecv
+ |  + MPI_Isend
+ |  + MPI_Wait
+ + compute_solution
+ |  + MPI_Allreduce
+ |  + MPI_Irecv
+ |  + MPI_Isend
+ |  + MPI_Wait
+ + finalization
+ |  + MPI_Recv
+ |  + store_simulation_stats
+ |  + vtk_write_unstr_grid_header
+ |  + vtk_append_double
+ |  + MPI_Send
+ + MPI_Finalize
+ |  + TRACING

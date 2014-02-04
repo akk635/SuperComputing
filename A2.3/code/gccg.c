@@ -88,8 +88,9 @@ int main( int argc, char *argv[] ) {
 
     char *csv_file = malloc( sizeof(char) * 30 );
     csv_file = strcpy( csv_file, out_prefix );
-    FILE *csv_fp = fopen( strcat( csv_file, ".csv" ), "w" );
-    fprintf( csv_fp, "Init \t Compute \t Final \n" );
+    FILE *csv_fp = fopen( strcat( csv_file, ".csv" ), "a" );
+    fseek(csv_fp,0,SEEK_END);
+
     free( csv_file );
 
     MPI_Barrier( MPI_COMM_WORLD );
@@ -109,7 +110,10 @@ int main( int argc, char *argv[] ) {
         MPI_Abort( MPI_COMM_WORLD, my_rank );
     }
 
-    /*char file_vtk_out[100];
+    printf("cgup : %f \n", cgup[global_local_index[my_rank][1]]);
+//    MPI_Barrier( MPI_COMM_WORLD );
+
+    /*    char file_vtk_out[100];
      sprintf( file_vtk_out, "%s_cgup.vtk", out_prefix );*/
 
     // Implement this function in test_functions.c and call it here
@@ -117,59 +121,57 @@ int main( int argc, char *argv[] ) {
      nintcf, points_count, points, elems, local_int_cells, cgup, elemcount,
      writing_proc );*/
 
-    // Implement this function in test_functions.c and call it here
-    /*test_communication( file_in, file_vtk_out, local_global_index, nintci, nintcf, points_count,
+    /*    // Implement this function in test_functions.c and call it here
+     test_communication( file_in, file_vtk_out, local_global_index, nintci, nintcf, points_count,
      points, elems, local_int_cells, send_count, send_list, recv_count,
      recv_list, writing_proc );*/
 
-    printf("cgup : %f \n", cgup[global_local_index[my_rank][1]]);
-
-    MPI_Barrier( MPI_COMM_WORLD );
-    if ( my_rank == writing_proc ) {
-        endusec = PAPI_get_real_usec();
-        fprintf( csv_fp, "%lld \t", ( endusec - startusec ) );
-    }
+//    MPI_Barrier( MPI_COMM_WORLD );
+    /*    if ( my_rank == writing_proc ) {
+     endusec = PAPI_get_real_usec();
+     fprintf( csv_fp, "%lld \t", ( endusec - startusec ) );
+     }*/
 
 //    SCOREP_USER_REGION_DEFINE(OA_Phase)
     /********** END INITIALIZATION **********/
 
     /********** START COMPUTATIONAL LOOP **********/
-    MPI_Barrier( MPI_COMM_WORLD );
+/*    MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         startusec = PAPI_get_real_usec();
-    }
-//    SCOREP_USER_OA_PHASE_BEGIN(OA_Phase,“OA_Phase", SCOREP_USER_REGION_TYPE_COMMON)
+    }*/
+    //	SCOREP_USER_OA_PHASE_BEGIN(OA_Phase,“OA_Phase", SCOREP_USER_REGION_TYPE_COMMON)
     int total_iters = compute_solution( max_iters, nintci, nintcf, nextcf, lcc, bp, bs, bw, bl, bn,
                                         be, bh, cnorm, var, su, cgup, &residual_ratio,
                                         local_global_index, global_local_index, neighbors_count,
                                         send_count, send_list, recv_count, recv_list, elemcount,
                                         local_int_cells );
 //    SCOREP_USER_OA_PHASE_END(OA_Phase)
-    MPI_Barrier( MPI_COMM_WORLD );
+/*    MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
         fprintf( csv_fp, "%lld \t", ( endusec - startusec ) );
     }
-    /********** END COMPUTATIONAL LOOP **********/
-    printf("cgup : %f \n", cgup[global_local_index[my_rank][1]]);
+    ********* END COMPUTATIONAL LOOP *********
+    printf( "cgup : %f \n", cgup[global_local_index[my_rank][1]] );*/
 
     /********** START FINALIZATION **********/
-    MPI_Barrier( MPI_COMM_WORLD );
+/*    MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         startusec = PAPI_get_real_usec();
-    }
+    }*/
 
     finalization( file_in, out_prefix, total_iters, residual_ratio, nintci, nintcf, points_count,
                   points, elems, var, cgup, su, local_global_index, local_int_cells, elemcount,
                   writing_proc );
 
-    MPI_Barrier( MPI_COMM_WORLD );
+//    MPI_Barrier( MPI_COMM_WORLD );
     if ( my_rank == writing_proc ) {
         endusec = PAPI_get_real_usec();
         fprintf( csv_fp, "%lld \n", ( endusec - startusec ) );
     }
 
-    printf("cgup : %f \n", cgup[global_local_index[my_rank][1]]);
+    printf( "cgup : %f \n", cgup[global_local_index[my_rank][1]] );
     /********** END FINALIZATION **********/
 
     free( cnorm );

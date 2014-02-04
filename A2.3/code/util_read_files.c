@@ -41,7 +41,6 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
                      int *objval ) {
     int i = 0;
     int my_rank, nproc;
-    MPI_Status status;
     FILE *fp = fopen( file_name, "rb" );
 
     if ( fp == NULL ) {
@@ -111,87 +110,82 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
 
     } else if ( strcmp( part_type, "myclassical" ) == 0 ) {
         if ( my_rank == 0 ) {
-            int fpcount;
-            fpcount = *NINTCI;
-
-            // So that we can call on explicit coordinates
-            distr_buffer = distr_buffer - *NINTCI;
-
-            int local_cells_size;
-
-            int normal_local_size = tot_domain_cells / nproc;
-            int res_cells = tot_domain_cells % nproc;
 
             // Initializing the distribution array with -1
             for ( int i = 0; i < tot_domain_cells; i++ ) {
                 distr_buffer[i] = -1;
             }
 
-            // All the neighbors do not cover all the cells.
-            // there are some external cells which are not neighbors of internal
-            int temp_cells_size = 0;
+            // So that we can call on explicit coordinates
+            distr_buffer = distr_buffer - *NINTCI;
 
-            // To get the indices to write in the distr_buffer
+            int tot_int_domain_cells = *NINTCF - *NINTCI + 1;
+
+            int *lccSeq = (int *) malloc( sizeof(int) * tot_int_domain_cells );
+
+            // Filling lccSeq with domain elements
+            int level_strt_node = 0, level_end_node = 0;
+
             int temp_buffer;
-
-            // equally distributing the local size for each processor
-            for ( int i = nproc - 1; i >= 0; i-- ) {
-                *elemcount = 0;
-                local_cells_size = normal_local_size;
-                // Reading the topological info and then distributing according to the locality
-                if ( res_cells > 0 ) {
-                    res_cells--;
-                    local_cells_size++;
-                }
-
-                while ( ( *elemcount ) < local_cells_size ) {
-                    if ( fpcount == *NINTCF + 1 ) {
-                        break;
-                    }
-
-                    if ( distr_buffer[fpcount] == -1 ) {
-                        distr_buffer[fpcount] = i;
-                        ( *elemcount )++;
-                        temp_cells_size++;
-                    }
-
-                    for ( int j = 0; j < 6; j++ ) {
-                        fread( &temp_buffer, sizeof(int), 1, fp );
-                        if ( distr_buffer[temp_buffer] == -1 ) {
-                            distr_buffer[temp_buffer] = i;
-                            ( *elemcount )++;
-                            temp_cells_size++;
-                        }
-                    }
-                    fpcount++;
-                }
-
-                // Sending the internal cells indices to the respective processes
-                // MPI_Send (&buf,count,datatype,dest,tag,comm)
-                if ( i != 0 ) {
-                    MPI_Send( elemcount, 1, MPI_INT, i, i, MPI_COMM_WORLD );
+            int elems_counter = 0;
+            // Adding the first elem
+            lccSeq[0] = *NINTCI;
+            elems_counter++;
+            distr_buffer[*NINTCI] = 0;
+            for ( int i = 0; i < 6; i++ ) {
+                fread( &temp_buffer, sizeof(int), 1, fp );
+                if ( temp_buffer <= *NINTCF ){
+                    distr_buffer[temp_buffer] = 0;
+                    lccSeq[elems_counter++] = temp_buffer;
                 }
             }
+            level_strt_node++;
+            level_end_node = elems_counter;
 
-            // Now distributing all the remaining external cells to process 0
-            for ( int i = *NEXTCI; i <= *NEXTCF; i++ ) {
-                if ( distr_buffer[i] == -1 ) {
-                    distr_buffer[i] = 0;
-                    ( *elemcount )++;
+            while ( elems_counter < tot_int_domain_cells ) {
+
+                // Start to fill in the next level
+                if ( level_strt_node == level_end_node ) {
+                    level_end_node = elems_counter;
+                }
+
+                fseek( fp, ( 4 + ( lccSeq[level_strt_node] - *NINTCI ) * 6 ) * sizeof(int),
+                SEEK_SET );
+                for ( int i = 0; i < 6; i++ ) {
+                    fread( &temp_buffer, sizeof(int), 1, fp );
+                    if ( ( temp_buffer <= *NINTCF ) & ( distr_buffer[temp_buffer] == -1 ) ) {
+                        // Making it visited
+                        distr_buffer[temp_buffer] = 0;
+                        lccSeq[elems_counter++] = temp_buffer;
+                    }
+                }
+                level_strt_node++;
+            }
+            //lccSeq is completely filled
+
+            assert( elems_counter == tot_int_domain_cells );
+
+            // To fill the distr_buffer as in the classical case
+            int local_cells_size;
+
+            int normal_local_size = tot_int_domain_cells / nproc;
+            int res_cells = tot_int_domain_cells % nproc;
+            int temp_cells_size = 0;
+            int offset = 0;
+
+            for ( int i = 0; i < nproc; i++ ) {
+                local_cells_size = normal_local_size;
+                if ( res_cells > 0 ) {
+                    local_cells_size++;
+                    res_cells--;
+                }
+                for ( int j = 0; j < local_cells_size; j++ ) {
+                    distr_buffer[lccSeq[offset + j]] = i;
                     temp_cells_size++;
                 }
+                offset += local_cells_size;
             }
-            assert( temp_cells_size == tot_domain_cells );
-            // Now distributing the buffer to all the processors
-            /*for ( int i = 1; i < nproc; i++ ) {
-             // MPI_Send (&buf,count,datatype,dest,tag,comm)
-             MPI_Send( distr_buffer + *NINTCI, tot_domain_cells, MPI_INT, i, i, MPI_COMM_WORLD );
-             }*/
-        } else {
-            MPI_Recv( elemcount, 1, MPI_INT, 0, my_rank, MPI_COMM_WORLD, &status );
-            // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-            /*MPI_Recv( distr_buffer, tot_domain_cells, MPI_INT, 0, my_rank, MPI_COMM_WORLD,
-             &status );*/
+            assert( offset == tot_int_domain_cells );
         }
 
     } else {
@@ -359,27 +353,16 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
 
     int index_read = 4 * sizeof(int);
 
-    if ( strcmp( part_type, "myclassical" ) == 0 ) {
-        // Start reading LCC
-        for ( int i = 0; i < ( *local_int_cells ); i++ ) {
-            fseek( fp, index_read + ( ( *local_global_index )[i] - *NINTCI ) * 6 * sizeof(int),
-            SEEK_SET );
-            for ( int j = 0; j < 6; j++ ) {
-                fread( &( *LCC )[i][j], sizeof(int), 1, fp );
-            }
-        }
-    } else {
-        ( *elemcount ) = ( *local_int_cells );
-        // Start reading LCC
-        for ( int i = 0; i < ( *local_int_cells ); i++ ) {
-            fseek( fp, index_read + ( ( *local_global_index )[i] - *NINTCI ) * 6 * sizeof(int),
-            SEEK_SET );
-            for ( int j = 0; j < 6; j++ ) {
-                fread( &( *LCC )[i][j], sizeof(int), 1, fp );
-                if ( ( ( *LCC )[i][j] > *NINTCF ) ) {
-                    distr_buffer[( ( *LCC )[i][j] )] = my_rank;
-                    ( *elemcount )++;
-                }
+    ( *elemcount ) = ( *local_int_cells );
+    // Start reading LCC
+    for ( int i = 0; i < ( *local_int_cells ); i++ ) {
+        fseek( fp, index_read + ( ( *local_global_index )[i] - *NINTCI ) * 6 * sizeof(int),
+        SEEK_SET );
+        for ( int j = 0; j < 6; j++ ) {
+            fread( &( *LCC )[i][j], sizeof(int), 1, fp );
+            if ( ( ( *LCC )[i][j] > *NINTCF ) ) {
+                distr_buffer[( ( *LCC )[i][j] )] = my_rank;
+                ( *elemcount )++;
             }
         }
     }
@@ -488,6 +471,8 @@ int read_binary_geo( char *file_name, char* part_type, int *NINTCI, int *NINTCF,
     assert( fpos == nodes_read_end );
 
     fread( points_count, sizeof(int), 1, fp );
+
+    printf( "points count %d \n", *points_count );
 
     // allocate points vec
     if ( ( *points = (int **) calloc( *points_count, sizeof(int*) ) ) == NULL ) {

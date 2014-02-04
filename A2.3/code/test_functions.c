@@ -97,29 +97,19 @@ int test_communication( char *file_in, char *file_vtk_out, int *local_global_ind
     MPI_Comm_size( MPI_COMM_WORLD, &nproc );    /// get number of processes
 
     if ( my_rank == writing_proc ) {
-        int proc_loc_int_size = 0;
-        int *temp_elems = NULL;
-        int *temp_loc_glo_index = NULL;
         // double *temp_data_values;
-
-        // Gather all the elems into one processor
-        int *global_elems = (int *) malloc( ( nintcf - nintci + 1 ) * 8 * sizeof(int) );
 
         // Gather all the data values into one processor
         double *data_values = (double *) calloc( ( nintcf - nintci + 1 ), sizeof(double) );
 
         for ( int i = 0; i < local_int_cells; i++ ) {
-            for ( int j = 0; j < 8; j++ ) {
-                global_elems[( local_global_index[i] - nintci ) * 8 + j] = elems[i * 8 + j];
-            }
-            // Init all of them to be local internal cells
             data_values[local_global_index[i] - nintci] = 15;
         }
 
         // Now updating the send list
         for ( int i = 0; i < nproc; i++ ) {
             for ( int j = 0; j < ( send_count[i] ); j++ ) {
-                data_values[local_global_index[send_list[i][j]] - nintci] = 10;
+                data_values[send_list[i][j] - nintci] = 10;
             }
         }
 
@@ -130,51 +120,12 @@ int test_communication( char *file_in, char *file_vtk_out, int *local_global_ind
             }
         }
 
-        for ( int i = nproc - 1; i >= 0; i-- ) {
-            if ( i != writing_proc ) {
-                // MPI_Recv (&buf,count,datatype,source,tag,comm,&status)
-                MPI_Recv( &proc_loc_int_size, 1, MPI_INT, i, i, MPI_COMM_WORLD, &status );
-                temp_elems = (int *) malloc( proc_loc_int_size * 8 * sizeof(int) );
-                MPI_Recv( temp_elems, proc_loc_int_size * 8, MPI_INT, i, i, MPI_COMM_WORLD,
-                          &status );
-
-                // Now where to place indices
-                temp_loc_glo_index = (int *) malloc( proc_loc_int_size * sizeof(int) );
-                MPI_Recv( temp_loc_glo_index, proc_loc_int_size, MPI_INT, i, i, MPI_COMM_WORLD,
-                          &status );
-
-                /*
-                 temp_data_values = (double *) malloc( proc_loc_int_size * sizeof(double) );
-                 MPI_Recv( temp_data_values, proc_loc_int_size, MPI_DOUBLE, i, i, MPI_COMM_WORLD,
-                 &status );
-                 */
-
-                // Need calculation
-                for ( int i = 0; i < proc_loc_int_size; i++ ) {
-                    for ( int j = 0; j < 8; j++ ) {
-                        global_elems[( temp_loc_glo_index[i] - nintci ) * 8 + j] = temp_elems[i * 8
-                                + j];
-                    }
-                    // data_values[temp_loc_glo_index[i]] = 0;//temp_data_values[i];
-                }
-            }
-        }
-
         vtk_write_unstr_grid_header( file_in, file_vtk_out, nintci, nintcf, points_count, points,
-                                     global_elems );
+                                     elems );
         vtk_append_double( file_vtk_out, "CGUP", nintci, nintcf, data_values );
-        free( global_elems );
+
         free( data_values );
-        free( temp_elems );
-        free( temp_loc_glo_index );
         // free( temp_data_values );
-    } else {
-        // MPI_Send (&buf,count,datatype,dest,tag,comm)
-        MPI_Send( &local_int_cells, 1, MPI_INT, writing_proc, my_rank, MPI_COMM_WORLD );
-        MPI_Send( elems, local_int_cells * 8, MPI_INT, writing_proc, my_rank, MPI_COMM_WORLD );
-        MPI_Send( local_global_index, local_int_cells, MPI_INT, writing_proc, my_rank,
-        MPI_COMM_WORLD );
-        // MPI_Send( cgup, local_int_cells, MPI_DOUBLE, writing_proc, my_rank, MPI_COMM_WORLD );
     }
 
     return 0;
